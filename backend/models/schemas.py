@@ -188,7 +188,7 @@ class SearchData(Model):
     originStationId: Identifier
     destinationId: Identifier
     expiresAt: AwareDatetime
-    routeOptions: list[RouteOption] = Field(max_length=12)
+    routeOptions: list[RouteOption]
     sortedBy: str | None = None
     routingNotice: str | None = None
     referenceRetrievedAt: AwareDatetime | None = None

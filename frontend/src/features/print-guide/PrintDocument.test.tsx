@@ -105,7 +105,7 @@ it('소비자 인쇄표는 이동 안내와 값만 표시하고 메타데이터�
   const host = document.createElement('div');
   host.innerHTML = renderToStaticMarkup(<PrintDocument snapshot={data} originName="종합터미널" destinationName="병원" />);
   expect(Array.from(host.querySelectorAll('header dt, header dd'), cell => cell.textContent)).toEqual([
-    '출발 정류장', '종합터미널 685', '목적지', '병원',
+    '출발 정류장', '종합터미널 686', '목적지', '병원',
   ]);
   expect(host.textContent).toContain('도보 170m · 약 3분');
   expect(host.textContent).not.toMatch(/공식 노선|대기시간 제외|OpenStreetMap|원천|서버 수집|카운트다운|확인 불가|출발 정류장은 제외/);

@@ -93,7 +93,8 @@ function JourneySteps({ detail, high }: { detail: RouteDetail; high: boolean }) 
               </span>
               <div>
                 {segment.type === 'bus' && <>
-                  <h3>{formatBusLabel(segment.routeName).replace(/ 버스$/, '')} {transfer ? formatStation(segment.boardStation) : segment.boardStation.name} 승차</h3>
+                  <h3>{formatBusLabel(segment.routeName).replace(/ 버스$/, '')} {transfer || segment.boardStation.stationId === ORIGIN_STATION_ID
+                    ? formatStation(segment.boardStation) : segment.boardStation.name} 승차</h3>
                   {segment.directionLabel && <p className={s.direction}>운행 방향 <strong>{segment.directionLabel}</strong></p>}
                 </>}
                 {segment.type === 'walk' && <>
@@ -362,7 +363,7 @@ export function App() {
   const preferenceSort = assistantSorts.find(([value]) => value === routePreference && value !== 'transfers');
   const confirmationSubtitle = routePreference ? 'AI가 경로를 추천해 드려요.' : '목적지를 확인하면 이용할 수 있는 경로를 보여 드려요.';
   const confirmedCandidate = conversation?.candidates.length === 1 ? conversation.candidates[0] : undefined;
-  const walkingDistance = state.assistant ? state.destination?.walkingDistanceMeters : null;
+  const walkingDistance = state.destination?.walkingDistanceMeters;
   const printPending = state.screen === 'print' && state.busy;
   const step = state.screen === 'routes' ? 1 : state.screen === 'detail' ? 2 : state.screen === 'print' ? 3 : 0;
   const routeBack = state.assistant ? 'assistant' : state.results.length ? 'results' : 'destinations';
@@ -374,7 +375,7 @@ export function App() {
     results: noResults ? s.emptyResults : state.selectedCategory ? '' : s.searchResults,
     routes: recommended ? s.recommendationScreen : '', detail: s.detailScreen, print: s.printScreen, done: s.done,
   }[state.screen];
-  const screenSpeech: Record<State['screen'], string> = { home: '현재 정류장에서 목적지까지 가는 버스를 찾아드려요. 화면으로 찾기나 말로 찾기를 눌러 주세요.', assistant: conversation?.clarification?.question ?? (confirmedCandidate ? `${confirmedCandidate.name}이 맞나요?` : '가고 싶은 곳과 원하는 이동 방법을 말씀하거나 입력해 주세요.'), destinations: '어디로 가시나요? 검색하거나 목록에서 목적지를 선택해 주세요.', keyboard: '장소를 입력한 뒤 검색하기를 눌러 주세요.', results: `${state.resultTitle}. 검색 결과 ${state.results.length}건. 찾으시는 장소를 선택해 주세요.`, routes: noRoutes ? `이용할 수 있는 버스 경로를 찾지 못했어요. ${walkingDistance == null ? '' : `목적지까지 도보 ${formatDistance(walkingDistance)}예요.`}` : `이용 가능한 경로 ${state.search?.routeOptions.length ?? 0}개. 이동할 경로를 선택해 주세요.`, detail: '선택한 경로를 확인해 주세요. 아래 경로로 이동하시겠어요?', print: '종이 안내표를 출력해 드릴까요? 출력하기 버튼을 눌러 주세요.', done: '안내표를 확인해 주세요. 다시 인쇄하려면 계속 이용하기를 눌러 주세요.' };
+  const screenSpeech: Record<State['screen'], string> = { home: '현재 정류장에서 목적지까지 가는 버스를 찾아드려요. 화면으로 찾기나 말로 찾기를 눌러 주세요.', assistant: conversation?.clarification?.question ?? (confirmedCandidate ? `${confirmedCandidate.name}이 맞나요?` : '가고 싶은 곳과 원하는 이동 방법을 말씀하거나 입력해 주세요.'), destinations: '어디로 가시나요? 검색하거나 목록에서 목적지를 선택해 주세요.', keyboard: '장소를 입력한 뒤 검색하기를 눌러 주세요.', results: `${state.resultTitle}. 검색 결과 ${state.results.length}건. 찾으시는 장소를 선택해 주세요.`, routes: noRoutes ? `이용할 수 있는 버스 경로를 찾지 못했어요. ${walkingDistance == null ? '' : `목적지까지 도보 ${formatDistance(walkingDistance)}예요.`}` : '이동할 경로를 선택해 주세요. 한 경로에 여러 버스 번호가 있으면 타고 싶은 버스를 고를 수 있어요.', detail: '선택한 경로를 확인해 주세요. 아래 경로로 이동하시겠어요?', print: '종이 안내표를 출력해 드릴까요? 출력하기 버튼을 눌러 주세요.', done: '안내표를 확인해 주세요. 다시 인쇄하려면 계속 이용하기를 눌러 주세요.' };
   let spokenText = screenSpeech[state.screen];
   if (state.screen === 'detail' && state.detail?.journeyStatus === 'ready') {
     spokenText = routeSpeech(state.detail) || spokenText;

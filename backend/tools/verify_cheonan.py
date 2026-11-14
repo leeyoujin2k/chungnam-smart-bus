@@ -22,6 +22,7 @@ def verify(base_url):
     routes = {'cheonan-route-' + row['routeId']: row for row in source['routes']}
     checks = Counter()
     counts, changed_orders = {}, []
+    selection = None
     with httpx.Client(base_url=base_url, timeout=60, trust_env=False) as client:
         def request(method, path, **kwargs):
             response = client.request(method, '/api/v1' + path, **kwargs)
@@ -33,6 +34,7 @@ def verify(base_url):
 
         station = request('GET', '/stations/' + origin['stationId'])['station']
         assert station['name'] == origin['name'] and station['coordinates'] == origin['coordinates']
+        assert station['arsId'] == origin['arsId'] == '686'
         params = {'originStationId': origin['stationId']}
         places = request('GET', '/destinations', params=params)['destinations']
         assert len(places) == 26
@@ -48,27 +50,37 @@ def verify(base_url):
                     'destinationId': place['destinationId'], 'sort': mode,
                     'departAt': datetime.now(timezone.utc).isoformat()})
                 options = found['routeOptions']
-                assert options, place['name']
+                assert found['originStationId'] == origin['stationId']
                 metrics = [(p[metric] is None, p[metric] or 0) for p in options]
                 assert metrics == sorted(metrics), (place['name'], mode)
-                families = [tuple(p['routeNames']) for p in options]
-                assert len(set(families)) == len(families)
-                orders.append(tuple(families))
+                orders.append(tuple(p['routeOptionId'] for p in options))
                 checks['routeSearches'] += 1
-                if mode != 'transfers':
-                    continue
-                counts[place['name']] = len(options)
+                if mode == 'transfers':
+                    counts[place['name']] = len(options)
+                if options and selection is None:
+                    selection = {'routeSearchId': found['routeSearchId'], 'routeOptionId': options[0]['routeOptionId'],
+                                 'expectedRouteSnapshotVersion': options[0]['routeSnapshotVersion']}
+                bus_sequences = set()
                 for option in options:
                     path = f"/route-searches/{found['routeSearchId']}/options/{option['routeOptionId']}"
                     detail = request('GET', path)
                     buses = [p for p in detail['segments'] if p['type'] == 'bus']
+                    bus_sequence = tuple(bus['routeName'] for bus in buses)
+                    assert bus_sequence not in bus_sequences
+                    bus_sequences.add(bus_sequence)
                     transfers = [p for p in detail['segments'] if p['type'] == 'transfer']
+                    assert detail['originStationId'] == origin['stationId']
+                    assert detail['segments'][0]['type'] == 'bus'
+                    assert buses[0]['boardStation']['stationId'] == option['boardStation']['stationId'] == origin['stationId']
+                    assert 0 <= option['walkingDistanceMeters'] == detail['walkingDistanceMeters'] <= 1000
+                    assert [p['segmentId'] for p in detail['segments'] if p['type'] == 'walk'] == ['destination-walk']
                     assert option['transferCount'] == max(0, len(buses)-1) == len(transfers)
                     for bus in buses:
                         stops = routes[bus['routeId']]['stops']
                         assert 1 <= bus['boardSequence'] < bus['alightSequence'] <= len(stops)
                         assert stops[bus['boardSequence']-1] == bus['boardStation']['stationId'].removeprefix('cheonan-stop-')
                         assert stops[bus['alightSequence']-1] == bus['alightStation']['stationId'].removeprefix('cheonan-stop-')
+                        assert '285000685' not in stops[bus['boardSequence']-1:bus['alightSequence']]
                     if transfers:
                         assert buses[0]['alightStation'] == transfers[0]['atStation'] == buses[1]['boardStation']
                     assert option['waitingDurationSeconds'] is None
@@ -77,12 +89,11 @@ def verify(base_url):
             if len(set(orders)) > 1:
                 changed_orders.append(place['name'])
         # Verify the same selection reaches AI guidance, arrival lookup and print.
-        selection = {key: found[key] for key in ('routeSearchId',)}
-        selection.update(routeOptionId=options[0]['routeOptionId'],
-            expectedRouteSnapshotVersion=options[0]['routeSnapshotVersion'])
+        assert selection is not None
         request('POST', '/easy-guidance', json=selection)
         request('POST', '/print-guides', json=selection)
-        request('GET', f"/route-searches/{selection['routeSearchId']}/options/{selection['routeOptionId']}/live")
+        live = request('GET', f"/route-searches/{selection['routeSearchId']}/options/{selection['routeOptionId']}/live")
+        assert live['arrivals'][0]['boardStationId'] == origin['stationId']
         interpretation = request('POST', '/destination-interpretations', json={**params, 'text': '가까운 병원'})
         candidates = interpretation['candidates']
         assert [p['distanceMeters'] for p in candidates] == sorted(p['distanceMeters'] for p in candidates)

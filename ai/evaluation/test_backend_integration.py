@@ -222,7 +222,7 @@ class RecordingAdapter(RuleBasedAIAdapter):
 @unittest.skipIf(create_app is None, '백엔드 의존성 미설치')
 class CheonanConversationTest(unittest.TestCase):
     """공개 API에서 천안 목적지 확인, 경로 정렬, 이유, 질문, 인쇄를 검증한다."""
-    ORIGIN = 'cheonan-stop-285000685'
+    ORIGIN = 'cheonan-stop-285000686'
 
     def setUp(self):
         from ai.evaluation.run_eval import load_cases
@@ -246,8 +246,9 @@ class CheonanConversationTest(unittest.TestCase):
     def test_end_to_end_sentences(self):
         examples = [
             ('중앙시장 가는데 많이 안 걷고 싶어요', 'cheonan-central-market', True),
-            ('갈아타기 싫어요 단국대병원', 'cheonan-dankook-hospital', True),
-            ('성정시장 급해요', 'cheonan-seongjeong-market', False),
+            ('갈아타기 싫어요 단국대병원', 'cheonan-dankook-hospital', False),
+            ('갈아타기 싫어요 순천향대병원', 'cheonan-soonchunhyang-hospital', True),
+            ('성정시장 급해요', 'cheonan-seongjeong-market', True),
             ('고속터미널 가요', 'cheonan-express-terminal', False),
         ]
         for text, destination_id, has_route in examples:

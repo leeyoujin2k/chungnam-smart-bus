@@ -4,19 +4,15 @@
   "attribution": "© OpenStreetMap contributors (ODbL) · Valhalla / FOSSGIS",
   "costing": "pedestrian",
   "walkingSpeedKmh": 4.0,
-  "retrievedAt": "2026-11-10T12:29:44.837728+00:00",
+  "retrievedAt": "2026-11-14T14:16:19.861635+00:00",
+  "originStationId": "cheonan-stop-285000686",
   "destinations": {
     "cheonan-dankook-hospital": {
       "access": [
         {
-          "stationId": "285000640",
-          "distanceMeters": 138,
-          "durationSeconds": 124
-        },
-        {
-          "stationId": "285001715",
-          "distanceMeters": 170,
-          "durationSeconds": 167
+          "stationId": "285000638",
+          "distanceMeters": 941,
+          "durationSeconds": 990
         },
         {
           "stationId": "285000639",
@@ -24,28 +20,122 @@
           "durationSeconds": 242
         },
         {
+          "stationId": "285000640",
+          "distanceMeters": 138,
+          "durationSeconds": 124
+        },
+        {
           "stationId": "285000641",
           "distanceMeters": 369,
           "durationSeconds": 406
+        },
+        {
+          "stationId": "285001049",
+          "distanceMeters": 694,
+          "durationSeconds": 669
+        },
+        {
+          "stationId": "285001050",
+          "distanceMeters": 780,
+          "durationSeconds": 739
+        },
+        {
+          "stationId": "285001051",
+          "distanceMeters": 974,
+          "durationSeconds": 919
+        },
+        {
+          "stationId": "285001052",
+          "distanceMeters": 946,
+          "durationSeconds": 910
+        },
+        {
+          "stationId": "285001595",
+          "distanceMeters": 637,
+          "durationSeconds": 604
+        },
+        {
+          "stationId": "285001596",
+          "distanceMeters": 950,
+          "durationSeconds": 895
+        },
+        {
+          "stationId": "285001715",
+          "distanceMeters": 170,
+          "durationSeconds": 167
         }
       ],
       "directWalk": {
-        "distanceMeters": 3553,
-        "durationSeconds": 3398
-      },
-      "directWalkRetrievedAt": "2026-11-11T07:47:28.257165+00:00"
+        "distanceMeters": 3452,
+        "durationSeconds": 3336
+      }
     },
     "cheonan-soonchunhyang-hospital": {
       "access": [
         {
-          "stationId": "285071991",
-          "distanceMeters": 98,
-          "durationSeconds": 107
+          "stationId": "285000657",
+          "distanceMeters": 531,
+          "durationSeconds": 546
         },
         {
-          "stationId": "285071987",
-          "distanceMeters": 165,
-          "durationSeconds": 212
+          "stationId": "285000658",
+          "distanceMeters": 514,
+          "durationSeconds": 531
+        },
+        {
+          "stationId": "285000832",
+          "distanceMeters": 991,
+          "durationSeconds": 902
+        },
+        {
+          "stationId": "285000887",
+          "distanceMeters": 605,
+          "durationSeconds": 657
+        },
+        {
+          "stationId": "285000888",
+          "distanceMeters": 408,
+          "durationSeconds": 429
+        },
+        {
+          "stationId": "285000889",
+          "distanceMeters": 787,
+          "durationSeconds": 764
+        },
+        {
+          "stationId": "285000890",
+          "distanceMeters": 829,
+          "durationSeconds": 828
+        },
+        {
+          "stationId": "285000893",
+          "distanceMeters": 935,
+          "durationSeconds": 914
+        },
+        {
+          "stationId": "285000894",
+          "distanceMeters": 914,
+          "durationSeconds": 891
+        },
+        {
+          "stationId": "285000895",
+          "distanceMeters": 554,
+          "durationSeconds": 609
+        },
+        {
+          "stationId": "285000896",
+          "distanceMeters": 661,
+          "durationSeconds": 709
+        },
+        {
+          "stationId": "285000897",
+          "distanceMeters": 579,
+          "durationSeconds": 552
+        },
+        {
+          "stationId": "285000898",
+          "distanceMeters": 330,
+          "durationSeconds": 350
         },
         {
           "stationId": "285000899",
@@ -53,23 +143,127 @@
           "durationSeconds": 343
         },
         {
+          "stationId": "285000901",
+          "distanceMeters": 856,
+          "durationSeconds": 827
+        },
+        {
+          "stationId": "285000902",
+          "distanceMeters": 940,
+          "durationSeconds": 912
+        },
+        {
+          "stationId": "285000950",
+          "distanceMeters": 763,
+          "durationSeconds": 739
+        },
+        {
+          "stationId": "285000951",
+          "distanceMeters": 733,
+          "durationSeconds": 725
+        },
+        {
+          "stationId": "285001765",
+          "distanceMeters": 838,
+          "durationSeconds": 815
+        },
+        {
+          "stationId": "285002351",
+          "distanceMeters": 839,
+          "durationSeconds": 815
+        },
+        {
+          "stationId": "285010007",
+          "distanceMeters": 687,
+          "durationSeconds": 681
+        },
+        {
+          "stationId": "285071406",
+          "distanceMeters": 475,
+          "durationSeconds": 521
+        },
+        {
+          "stationId": "285071481",
+          "distanceMeters": 569,
+          "durationSeconds": 569
+        },
+        {
+          "stationId": "285071549",
+          "distanceMeters": 815,
+          "durationSeconds": 814
+        },
+        {
+          "stationId": "285071550",
+          "distanceMeters": 817,
+          "durationSeconds": 816
+        },
+        {
+          "stationId": "285071731",
+          "distanceMeters": 701,
+          "durationSeconds": 665
+        },
+        {
+          "stationId": "285071912",
+          "distanceMeters": 579,
+          "durationSeconds": 567
+        },
+        {
+          "stationId": "285071962",
+          "distanceMeters": 737,
+          "durationSeconds": 751
+        },
+        {
+          "stationId": "285071963",
+          "distanceMeters": 417,
+          "durationSeconds": 438
+        },
+        {
+          "stationId": "285071964",
+          "distanceMeters": 755,
+          "durationSeconds": 730
+        },
+        {
+          "stationId": "285071987",
+          "distanceMeters": 165,
+          "durationSeconds": 212
+        },
+        {
           "stationId": "285071988",
           "distanceMeters": 702,
           "durationSeconds": 665
+        },
+        {
+          "stationId": "285071991",
+          "distanceMeters": 98,
+          "durationSeconds": 107
+        },
+        {
+          "stationId": "285071992",
+          "distanceMeters": 271,
+          "durationSeconds": 300
+        },
+        {
+          "stationId": "288001405",
+          "distanceMeters": 842,
+          "durationSeconds": 818
         }
       ],
       "directWalk": {
-        "distanceMeters": 2907,
-        "durationSeconds": 2759
-      },
-      "directWalkRetrievedAt": "2026-11-11T07:47:29.686045+00:00"
+        "distanceMeters": 3000,
+        "durationSeconds": 2882
+      }
     },
     "cheonan-medical-center": {
       "access": [
         {
-          "stationId": "285000746",
-          "distanceMeters": 314,
-          "durationSeconds": 297
+          "stationId": "285000741",
+          "distanceMeters": 882,
+          "durationSeconds": 1102
+        },
+        {
+          "stationId": "285000742",
+          "distanceMeters": 932,
+          "durationSeconds": 1283
         },
         {
           "stationId": "285000743",
@@ -77,33 +271,77 @@
           "durationSeconds": 586
         },
         {
+          "stationId": "285000744",
+          "distanceMeters": 642,
+          "durationSeconds": 898
+        },
+        {
           "stationId": "285000745",
           "distanceMeters": 574,
           "durationSeconds": 664
         },
         {
-          "stationId": "285000744",
-          "distanceMeters": 642,
-          "durationSeconds": 898
+          "stationId": "285000746",
+          "distanceMeters": 314,
+          "durationSeconds": 297
         }
       ],
       "directWalk": {
-        "distanceMeters": 5931,
-        "durationSeconds": 5938
-      },
-      "directWalkRetrievedAt": "2026-11-11T07:47:31.070181+00:00"
+        "distanceMeters": 5865,
+        "durationSeconds": 5894
+      }
     },
     "cheonan-chungmu-hospital": {
       "access": [
         {
-          "stationId": "285001518",
-          "distanceMeters": 218,
-          "durationSeconds": 204
+          "stationId": "285000824",
+          "distanceMeters": 959,
+          "durationSeconds": 1005
         },
         {
-          "stationId": "285000838",
-          "distanceMeters": 148,
-          "durationSeconds": 141
+          "stationId": "285000825",
+          "distanceMeters": 875,
+          "durationSeconds": 897
+        },
+        {
+          "stationId": "285000826",
+          "distanceMeters": 598,
+          "durationSeconds": 580
+        },
+        {
+          "stationId": "285000827",
+          "distanceMeters": 601,
+          "durationSeconds": 580
+        },
+        {
+          "stationId": "285000828",
+          "distanceMeters": 313,
+          "durationSeconds": 299
+        },
+        {
+          "stationId": "285000829",
+          "distanceMeters": 246,
+          "durationSeconds": 241
+        },
+        {
+          "stationId": "285000832",
+          "distanceMeters": 881,
+          "durationSeconds": 882
+        },
+        {
+          "stationId": "285000834",
+          "distanceMeters": 614,
+          "durationSeconds": 562
+        },
+        {
+          "stationId": "285000835",
+          "distanceMeters": 548,
+          "durationSeconds": 518
+        },
+        {
+          "stationId": "285000836",
+          "distanceMeters": 304,
+          "durationSeconds": 254
         },
         {
           "stationId": "285000837",
@@ -111,28 +349,227 @@
           "durationSeconds": 317
         },
         {
-          "stationId": "285000828",
-          "distanceMeters": 313,
-          "durationSeconds": 299
+          "stationId": "285000838",
+          "distanceMeters": 148,
+          "durationSeconds": 141
+        },
+        {
+          "stationId": "285000839",
+          "distanceMeters": 599,
+          "durationSeconds": 544
+        },
+        {
+          "stationId": "285000840",
+          "distanceMeters": 598,
+          "durationSeconds": 544
+        },
+        {
+          "stationId": "285000841",
+          "distanceMeters": 948,
+          "durationSeconds": 965
+        },
+        {
+          "stationId": "285000847",
+          "distanceMeters": 771,
+          "durationSeconds": 768
+        },
+        {
+          "stationId": "285000848",
+          "distanceMeters": 800,
+          "durationSeconds": 783
+        },
+        {
+          "stationId": "285000865",
+          "distanceMeters": 775,
+          "durationSeconds": 805
+        },
+        {
+          "stationId": "285000866",
+          "distanceMeters": 670,
+          "durationSeconds": 608
+        },
+        {
+          "stationId": "285000867",
+          "distanceMeters": 933,
+          "durationSeconds": 840
+        },
+        {
+          "stationId": "285000868",
+          "distanceMeters": 947,
+          "durationSeconds": 852
+        },
+        {
+          "stationId": "285000887",
+          "distanceMeters": 660,
+          "durationSeconds": 621
+        },
+        {
+          "stationId": "285000888",
+          "distanceMeters": 940,
+          "durationSeconds": 856
+        },
+        {
+          "stationId": "285000889",
+          "distanceMeters": 930,
+          "durationSeconds": 832
+        },
+        {
+          "stationId": "285000890",
+          "distanceMeters": 962,
+          "durationSeconds": 876
+        },
+        {
+          "stationId": "285000896",
+          "distanceMeters": 804,
+          "durationSeconds": 777
+        },
+        {
+          "stationId": "285001516",
+          "distanceMeters": 296,
+          "durationSeconds": 266
+        },
+        {
+          "stationId": "285001517",
+          "distanceMeters": 412,
+          "durationSeconds": 367
+        },
+        {
+          "stationId": "285001518",
+          "distanceMeters": 218,
+          "durationSeconds": 204
+        },
+        {
+          "stationId": "285001763",
+          "distanceMeters": 660,
+          "durationSeconds": 594
+        },
+        {
+          "stationId": "285001764",
+          "distanceMeters": 647,
+          "durationSeconds": 631
+        },
+        {
+          "stationId": "285001815",
+          "distanceMeters": 744,
+          "durationSeconds": 700
+        },
+        {
+          "stationId": "285001919",
+          "distanceMeters": 433,
+          "durationSeconds": 426
+        },
+        {
+          "stationId": "285001920",
+          "distanceMeters": 421,
+          "durationSeconds": 414
+        },
+        {
+          "stationId": "285010011",
+          "distanceMeters": 864,
+          "durationSeconds": 856
+        },
+        {
+          "stationId": "285071728",
+          "distanceMeters": 438,
+          "durationSeconds": 425
+        },
+        {
+          "stationId": "285071731",
+          "distanceMeters": 807,
+          "durationSeconds": 750
+        },
+        {
+          "stationId": "285071961",
+          "distanceMeters": 253,
+          "durationSeconds": 259
+        },
+        {
+          "stationId": "285071962",
+          "distanceMeters": 659,
+          "durationSeconds": 612
+        },
+        {
+          "stationId": "285071963",
+          "distanceMeters": 949,
+          "durationSeconds": 864
+        },
+        {
+          "stationId": "285071977",
+          "distanceMeters": 460,
+          "durationSeconds": 444
+        },
+        {
+          "stationId": "285071988",
+          "distanceMeters": 806,
+          "durationSeconds": 750
+        },
+        {
+          "stationId": "285071989",
+          "distanceMeters": 773,
+          "durationSeconds": 722
+        },
+        {
+          "stationId": "285071990",
+          "distanceMeters": 768,
+          "durationSeconds": 796
         }
       ],
       "directWalk": {
-        "distanceMeters": 3871,
-        "durationSeconds": 3584
-      },
-      "directWalkRetrievedAt": "2026-11-11T07:47:32.463619+00:00"
+        "distanceMeters": 3964,
+        "durationSeconds": 3707
+      }
     },
     "cheonan-bus-terminal": {
       "access": [
         {
-          "stationId": "285000686",
-          "distanceMeters": 533,
-          "durationSeconds": 508
+          "stationId": "285000646",
+          "distanceMeters": 755,
+          "durationSeconds": 679
         },
         {
-          "stationId": "285010125",
-          "distanceMeters": 597,
-          "durationSeconds": 545
+          "stationId": "285000648",
+          "distanceMeters": 552,
+          "durationSeconds": 507
+        },
+        {
+          "stationId": "285000649",
+          "distanceMeters": 595,
+          "durationSeconds": 536
+        },
+        {
+          "stationId": "285000650",
+          "distanceMeters": 567,
+          "durationSeconds": 507
+        },
+        {
+          "stationId": "285000651",
+          "distanceMeters": 844,
+          "durationSeconds": 777
+        },
+        {
+          "stationId": "285000652",
+          "distanceMeters": 881,
+          "durationSeconds": 830
+        },
+        {
+          "stationId": "285000681",
+          "distanceMeters": 972,
+          "durationSeconds": 889
+        },
+        {
+          "stationId": "285000682",
+          "distanceMeters": 924,
+          "durationSeconds": 845
+        },
+        {
+          "stationId": "285000683",
+          "distanceMeters": 593,
+          "durationSeconds": 532
+        },
+        {
+          "stationId": "285000684",
+          "distanceMeters": 586,
+          "durationSeconds": 526
         },
         {
           "stationId": "285000685",
@@ -140,23 +577,137 @@
           "durationSeconds": 580
         },
         {
+          "stationId": "285000686",
+          "distanceMeters": 533,
+          "durationSeconds": 508
+        },
+        {
+          "stationId": "285000687",
+          "distanceMeters": 245,
+          "durationSeconds": 262
+        },
+        {
+          "stationId": "285000688",
+          "distanceMeters": 863,
+          "durationSeconds": 852
+        },
+        {
+          "stationId": "285000689",
+          "distanceMeters": 876,
+          "durationSeconds": 881
+        },
+        {
+          "stationId": "285000706",
+          "distanceMeters": 550,
+          "durationSeconds": 513
+        },
+        {
+          "stationId": "285000707",
+          "distanceMeters": 566,
+          "durationSeconds": 505
+        },
+        {
+          "stationId": "285000709",
+          "distanceMeters": 828,
+          "durationSeconds": 790
+        },
+        {
+          "stationId": "285001062",
+          "distanceMeters": 912,
+          "durationSeconds": 894
+        },
+        {
+          "stationId": "285002084",
+          "distanceMeters": 667,
+          "durationSeconds": 593
+        },
+        {
+          "stationId": "285002085",
+          "distanceMeters": 486,
+          "durationSeconds": 448
+        },
+        {
           "stationId": "285010014",
           "distanceMeters": 539,
           "durationSeconds": 513
+        },
+        {
+          "stationId": "285010125",
+          "distanceMeters": 597,
+          "durationSeconds": 545
+        },
+        {
+          "stationId": "285071675",
+          "distanceMeters": 954,
+          "durationSeconds": 947
+        },
+        {
+          "stationId": "285071724",
+          "distanceMeters": 560,
+          "durationSeconds": 514
+        },
+        {
+          "stationId": "285071768",
+          "distanceMeters": 582,
+          "durationSeconds": 541
         }
       ],
       "directWalk": {
-        "distanceMeters": 629,
-        "durationSeconds": 590
-      },
-      "directWalkRetrievedAt": "2026-11-11T07:47:33.829466+00:00"
+        "distanceMeters": 533,
+        "durationSeconds": 504
+      }
     },
     "cheonan-express-terminal": {
       "access": [
         {
-          "stationId": "285000687",
-          "distanceMeters": 65,
-          "durationSeconds": 96
+          "stationId": "285000646",
+          "distanceMeters": 710,
+          "durationSeconds": 657
+        },
+        {
+          "stationId": "285000648",
+          "distanceMeters": 507,
+          "durationSeconds": 485
+        },
+        {
+          "stationId": "285000649",
+          "distanceMeters": 448,
+          "durationSeconds": 494
+        },
+        {
+          "stationId": "285000650",
+          "distanceMeters": 420,
+          "durationSeconds": 466
+        },
+        {
+          "stationId": "285000651",
+          "distanceMeters": 697,
+          "durationSeconds": 736
+        },
+        {
+          "stationId": "285000652",
+          "distanceMeters": 734,
+          "durationSeconds": 789
+        },
+        {
+          "stationId": "285000681",
+          "distanceMeters": 825,
+          "durationSeconds": 848
+        },
+        {
+          "stationId": "285000682",
+          "distanceMeters": 777,
+          "durationSeconds": 803
+        },
+        {
+          "stationId": "285000683",
+          "distanceMeters": 446,
+          "durationSeconds": 490
+        },
+        {
+          "stationId": "285000684",
+          "distanceMeters": 439,
+          "durationSeconds": 484
         },
         {
           "stationId": "285000685",
@@ -164,33 +715,128 @@
           "durationSeconds": 512
         },
         {
+          "stationId": "285000686",
+          "distanceMeters": 197,
+          "durationSeconds": 244
+        },
+        {
+          "stationId": "285000687",
+          "distanceMeters": 65,
+          "durationSeconds": 96
+        },
+        {
+          "stationId": "285000688",
+          "distanceMeters": 707,
+          "durationSeconds": 794
+        },
+        {
+          "stationId": "285000689",
+          "distanceMeters": 720,
+          "durationSeconds": 823
+        },
+        {
+          "stationId": "285000706",
+          "distanceMeters": 499,
+          "durationSeconds": 533
+        },
+        {
+          "stationId": "285000707",
+          "distanceMeters": 548,
+          "durationSeconds": 564
+        },
+        {
+          "stationId": "285000708",
+          "distanceMeters": 982,
+          "durationSeconds": 942
+        },
+        {
+          "stationId": "285000709",
+          "distanceMeters": 783,
+          "durationSeconds": 768
+        },
+        {
+          "stationId": "285001062",
+          "distanceMeters": 922,
+          "durationSeconds": 970
+        },
+        {
+          "stationId": "285002084",
+          "distanceMeters": 622,
+          "durationSeconds": 572
+        },
+        {
+          "stationId": "285002085",
+          "distanceMeters": 441,
+          "durationSeconds": 426
+        },
+        {
+          "stationId": "285010014",
+          "distanceMeters": 396,
+          "durationSeconds": 445
+        },
+        {
           "stationId": "285010125",
           "distanceMeters": 454,
           "durationSeconds": 477
         },
         {
-          "stationId": "285000686",
-          "distanceMeters": 197,
-          "durationSeconds": 244
+          "stationId": "285071675",
+          "distanceMeters": 798,
+          "durationSeconds": 889
+        },
+        {
+          "stationId": "285071724",
+          "distanceMeters": 515,
+          "durationSeconds": 492
+        },
+        {
+          "stationId": "285071768",
+          "distanceMeters": 435,
+          "durationSeconds": 499
+        },
+        {
+          "stationId": "285071993",
+          "distanceMeters": 928,
+          "durationSeconds": 984,
+          "pedestrianRouting": "shortest"
         }
       ],
       "directWalk": {
-        "distanceMeters": 486,
-        "durationSeconds": 505
-      },
-      "directWalkRetrievedAt": "2026-11-11T07:47:35.210433+00:00"
+        "distanceMeters": 197,
+        "durationSeconds": 237
+      }
     },
     "cheonan-station": {
       "access": [
         {
-          "stationId": "285072005",
-          "distanceMeters": 309,
-          "durationSeconds": 372
+          "stationId": "285000649",
+          "distanceMeters": 935,
+          "durationSeconds": 955
         },
         {
-          "stationId": "285000678",
-          "distanceMeters": 254,
-          "durationSeconds": 288
+          "stationId": "285000650",
+          "distanceMeters": 963,
+          "durationSeconds": 979
+        },
+        {
+          "stationId": "285000651",
+          "distanceMeters": 686,
+          "durationSeconds": 691
+        },
+        {
+          "stationId": "285000652",
+          "distanceMeters": 720,
+          "durationSeconds": 770
+        },
+        {
+          "stationId": "285000653",
+          "distanceMeters": 304,
+          "durationSeconds": 381
+        },
+        {
+          "stationId": "285000654",
+          "distanceMeters": 259,
+          "durationSeconds": 340
         },
         {
           "stationId": "285000655",
@@ -198,28 +844,218 @@
           "durationSeconds": 383
         },
         {
-          "stationId": "285000654",
-          "distanceMeters": 259,
-          "durationSeconds": 340
+          "stationId": "285000656",
+          "distanceMeters": 340,
+          "durationSeconds": 416
+        },
+        {
+          "stationId": "285000659",
+          "distanceMeters": 926,
+          "durationSeconds": 987
+        },
+        {
+          "stationId": "285000660",
+          "distanceMeters": 922,
+          "durationSeconds": 984
+        },
+        {
+          "stationId": "285000665",
+          "distanceMeters": 970,
+          "durationSeconds": 1027
+        },
+        {
+          "stationId": "285000666",
+          "distanceMeters": 843,
+          "durationSeconds": 898
+        },
+        {
+          "stationId": "285000667",
+          "distanceMeters": 530,
+          "durationSeconds": 551
+        },
+        {
+          "stationId": "285000668",
+          "distanceMeters": 545,
+          "durationSeconds": 565
+        },
+        {
+          "stationId": "285000669",
+          "distanceMeters": 871,
+          "durationSeconds": 924
+        },
+        {
+          "stationId": "285000670",
+          "distanceMeters": 865,
+          "durationSeconds": 929
+        },
+        {
+          "stationId": "285000677",
+          "distanceMeters": 302,
+          "durationSeconds": 356
+        },
+        {
+          "stationId": "285000678",
+          "distanceMeters": 254,
+          "durationSeconds": 288
+        },
+        {
+          "stationId": "285000679",
+          "distanceMeters": 683,
+          "durationSeconds": 676
+        },
+        {
+          "stationId": "285000680",
+          "distanceMeters": 697,
+          "durationSeconds": 692
+        },
+        {
+          "stationId": "285000681",
+          "distanceMeters": 884,
+          "durationSeconds": 892
+        },
+        {
+          "stationId": "285000682",
+          "distanceMeters": 932,
+          "durationSeconds": 936
+        },
+        {
+          "stationId": "285000703",
+          "distanceMeters": 930,
+          "durationSeconds": 901
+        },
+        {
+          "stationId": "285000704",
+          "distanceMeters": 969,
+          "durationSeconds": 1071,
+          "pedestrianRouting": "shortest"
+        },
+        {
+          "stationId": "285000877",
+          "distanceMeters": 590,
+          "durationSeconds": 625
+        },
+        {
+          "stationId": "285000878",
+          "distanceMeters": 583,
+          "durationSeconds": 619
+        },
+        {
+          "stationId": "285001591",
+          "distanceMeters": 429,
+          "durationSeconds": 447
+        },
+        {
+          "stationId": "285001753",
+          "distanceMeters": 578,
+          "durationSeconds": 643
+        },
+        {
+          "stationId": "285071976",
+          "distanceMeters": 441,
+          "durationSeconds": 460
+        },
+        {
+          "stationId": "285072004",
+          "distanceMeters": 317,
+          "durationSeconds": 393
+        },
+        {
+          "stationId": "285072005",
+          "distanceMeters": 309,
+          "durationSeconds": 372
         }
       ],
       "directWalk": {
-        "distanceMeters": 1404,
-        "durationSeconds": 1346
-      },
-      "directWalkRetrievedAt": "2026-11-11T07:47:36.683154+00:00"
+        "distanceMeters": 1497,
+        "durationSeconds": 1471
+      }
     },
     "cheonan-dujeong-station": {
       "access": [
         {
-          "stationId": "285001035",
-          "distanceMeters": 201,
-          "durationSeconds": 187
+          "stationId": "285000975",
+          "distanceMeters": 791,
+          "durationSeconds": 706
+        },
+        {
+          "stationId": "285000976",
+          "distanceMeters": 666,
+          "durationSeconds": 505
+        },
+        {
+          "stationId": "285000978",
+          "distanceMeters": 324,
+          "durationSeconds": 288
+        },
+        {
+          "stationId": "285000979",
+          "distanceMeters": 352,
+          "durationSeconds": 320
+        },
+        {
+          "stationId": "285000980",
+          "distanceMeters": 716,
+          "durationSeconds": 672
+        },
+        {
+          "stationId": "285000981",
+          "distanceMeters": 856,
+          "durationSeconds": 794
+        },
+        {
+          "stationId": "285000982",
+          "distanceMeters": 952,
+          "durationSeconds": 900
+        },
+        {
+          "stationId": "285001026",
+          "distanceMeters": 867,
+          "durationSeconds": 828
+        },
+        {
+          "stationId": "285001027",
+          "distanceMeters": 772,
+          "durationSeconds": 736
+        },
+        {
+          "stationId": "285001028",
+          "distanceMeters": 448,
+          "durationSeconds": 457
+        },
+        {
+          "stationId": "285001029",
+          "distanceMeters": 467,
+          "durationSeconds": 473
+        },
+        {
+          "stationId": "285001030",
+          "distanceMeters": 509,
+          "durationSeconds": 491
+        },
+        {
+          "stationId": "285001031",
+          "distanceMeters": 534,
+          "durationSeconds": 512
+        },
+        {
+          "stationId": "285001032",
+          "distanceMeters": 877,
+          "durationSeconds": 843
+        },
+        {
+          "stationId": "285001033",
+          "distanceMeters": 867,
+          "durationSeconds": 834
         },
         {
           "stationId": "285001034",
           "distanceMeters": 182,
           "durationSeconds": 132
+        },
+        {
+          "stationId": "285001035",
+          "distanceMeters": 201,
+          "durationSeconds": 187
         },
         {
           "stationId": "285001483",
@@ -230,20 +1066,184 @@
           "stationId": "285002086",
           "distanceMeters": 413,
           "durationSeconds": 374
+        },
+        {
+          "stationId": "285010023",
+          "distanceMeters": 656,
+          "durationSeconds": 592
+        },
+        {
+          "stationId": "285071603",
+          "distanceMeters": 860,
+          "durationSeconds": 769
+        },
+        {
+          "stationId": "285071604",
+          "distanceMeters": 870,
+          "durationSeconds": 781
+        },
+        {
+          "stationId": "285071890",
+          "distanceMeters": 742,
+          "durationSeconds": 642
+        },
+        {
+          "stationId": "285071891",
+          "distanceMeters": 734,
+          "durationSeconds": 632
+        },
+        {
+          "stationId": "285071931",
+          "distanceMeters": 662,
+          "durationSeconds": 556
+        },
+        {
+          "stationId": "285071932",
+          "distanceMeters": 683,
+          "durationSeconds": 587
         }
       ],
       "directWalk": {
-        "distanceMeters": 2121,
-        "durationSeconds": 1966
-      },
-      "directWalkRetrievedAt": "2026-11-11T07:47:38.144294+00:00"
+        "distanceMeters": 2190,
+        "durationSeconds": 2066
+      }
     },
     "cheonan-bongmyeong-station": {
       "access": [
         {
-          "stationId": "285071988",
-          "distanceMeters": 764,
-          "durationSeconds": 685
+          "stationId": "285000657",
+          "distanceMeters": 593,
+          "durationSeconds": 566
+        },
+        {
+          "stationId": "285000658",
+          "distanceMeters": 576,
+          "durationSeconds": 551
+        },
+        {
+          "stationId": "285000837",
+          "distanceMeters": 926,
+          "durationSeconds": 856
+        },
+        {
+          "stationId": "285000866",
+          "distanceMeters": 998,
+          "durationSeconds": 948
+        },
+        {
+          "stationId": "285000887",
+          "distanceMeters": 488,
+          "durationSeconds": 453
+        },
+        {
+          "stationId": "285000888",
+          "distanceMeters": 633,
+          "durationSeconds": 569
+        },
+        {
+          "stationId": "285000889",
+          "distanceMeters": 615,
+          "durationSeconds": 561
+        },
+        {
+          "stationId": "285000890",
+          "distanceMeters": 657,
+          "durationSeconds": 625
+        },
+        {
+          "stationId": "285000891",
+          "distanceMeters": 911,
+          "durationSeconds": 834
+        },
+        {
+          "stationId": "285000892",
+          "distanceMeters": 950,
+          "durationSeconds": 908
+        },
+        {
+          "stationId": "285000895",
+          "distanceMeters": 817,
+          "durationSeconds": 796
+        },
+        {
+          "stationId": "285000896",
+          "distanceMeters": 489,
+          "durationSeconds": 506
+        },
+        {
+          "stationId": "285000897",
+          "distanceMeters": 720,
+          "durationSeconds": 659
+        },
+        {
+          "stationId": "285000898",
+          "distanceMeters": 392,
+          "durationSeconds": 370
+        },
+        {
+          "stationId": "285000899",
+          "distanceMeters": 385,
+          "durationSeconds": 363
+        },
+        {
+          "stationId": "285000950",
+          "distanceMeters": 988,
+          "durationSeconds": 878
+        },
+        {
+          "stationId": "285000951",
+          "distanceMeters": 958,
+          "durationSeconds": 864
+        },
+        {
+          "stationId": "285001763",
+          "distanceMeters": 976,
+          "durationSeconds": 926
+        },
+        {
+          "stationId": "285001765",
+          "distanceMeters": 900,
+          "durationSeconds": 835
+        },
+        {
+          "stationId": "285001920",
+          "distanceMeters": 746,
+          "durationSeconds": 752
+        },
+        {
+          "stationId": "285002351",
+          "distanceMeters": 901,
+          "durationSeconds": 835
+        },
+        {
+          "stationId": "285010007",
+          "distanceMeters": 841,
+          "durationSeconds": 791
+        },
+        {
+          "stationId": "285071406",
+          "distanceMeters": 829,
+          "durationSeconds": 816
+        },
+        {
+          "stationId": "285071481",
+          "distanceMeters": 860,
+          "durationSeconds": 801
+        },
+        {
+          "stationId": "285071549",
+          "distanceMeters": 969,
+          "durationSeconds": 922
+        },
+        {
+          "stationId": "285071550",
+          "distanceMeters": 971,
+          "durationSeconds": 924
+        },
+        {
+          "stationId": "285071728",
+          "distanceMeters": 706,
+          "durationSeconds": 701
         },
         {
           "stationId": "285071731",
@@ -251,33 +1251,104 @@
           "durationSeconds": 685
         },
         {
-          "stationId": "285000835",
-          "distanceMeters": 1086,
-          "durationSeconds": 963
+          "stationId": "285071912",
+          "distanceMeters": 895,
+          "durationSeconds": 840
+        },
+        {
+          "stationId": "285071962",
+          "distanceMeters": 469,
+          "durationSeconds": 428
+        },
+        {
+          "stationId": "285071963",
+          "distanceMeters": 642,
+          "durationSeconds": 577
+        },
+        {
+          "stationId": "285071964",
+          "distanceMeters": 980,
+          "durationSeconds": 869
+        },
+        {
+          "stationId": "285071977",
+          "distanceMeters": 992,
+          "durationSeconds": 989
         },
         {
           "stationId": "285071987",
           "distanceMeters": 424,
           "durationSeconds": 377
+        },
+        {
+          "stationId": "285071988",
+          "distanceMeters": 764,
+          "durationSeconds": 685
+        },
+        {
+          "stationId": "285071991",
+          "distanceMeters": 389,
+          "durationSeconds": 373
+        },
+        {
+          "stationId": "285071992",
+          "distanceMeters": 747,
+          "durationSeconds": 713
+        },
+        {
+          "stationId": "288001405",
+          "distanceMeters": 904,
+          "durationSeconds": 838
         }
       ],
       "directWalk": {
-        "distanceMeters": 3026,
-        "durationSeconds": 2833
-      },
-      "directWalkRetrievedAt": "2026-11-11T07:47:39.564902+00:00"
+        "distanceMeters": 3119,
+        "durationSeconds": 2956
+      }
     },
     "cheonan-city-hall": {
       "access": [
         {
-          "stationId": "285001503",
-          "distanceMeters": 490,
-          "durationSeconds": 627
+          "stationId": "285001015",
+          "distanceMeters": 597,
+          "durationSeconds": 659
         },
         {
-          "stationId": "285071398",
-          "distanceMeters": 472,
-          "durationSeconds": 651
+          "stationId": "285001016",
+          "distanceMeters": 430,
+          "durationSeconds": 368
+        },
+        {
+          "stationId": "285001017",
+          "distanceMeters": 855,
+          "durationSeconds": 1060
+        },
+        {
+          "stationId": "285001018",
+          "distanceMeters": 860,
+          "durationSeconds": 1062
+        },
+        {
+          "stationId": "285001498",
+          "distanceMeters": 966,
+          "durationSeconds": 1181,
+          "pedestrianRouting": "shortest"
+        },
+        {
+          "stationId": "285001499",
+          "distanceMeters": 999,
+          "durationSeconds": 1285,
+          "pedestrianRouting": "shortest"
+        },
+        {
+          "stationId": "285001500",
+          "distanceMeters": 793,
+          "durationSeconds": 949
+        },
+        {
+          "stationId": "285001501",
+          "distanceMeters": 908,
+          "durationSeconds": 906
         },
         {
           "stationId": "285001502",
@@ -285,28 +1356,103 @@
           "durationSeconds": 699
         },
         {
+          "stationId": "285001503",
+          "distanceMeters": 490,
+          "durationSeconds": 627
+        },
+        {
+          "stationId": "285001504",
+          "distanceMeters": 833,
+          "durationSeconds": 1032
+        },
+        {
+          "stationId": "285001505",
+          "distanceMeters": 181,
+          "durationSeconds": 95
+        },
+        {
+          "stationId": "285071398",
+          "distanceMeters": 472,
+          "durationSeconds": 651
+        },
+        {
           "stationId": "285071748",
           "distanceMeters": 610,
           "durationSeconds": 796
+        },
+        {
+          "stationId": "285071749",
+          "distanceMeters": 368,
+          "durationSeconds": 563
         }
       ],
       "directWalk": {
-        "distanceMeters": 4721,
-        "durationSeconds": 4794
-      },
-      "directWalkRetrievedAt": "2026-11-11T07:47:40.978607+00:00"
+        "distanceMeters": 4790,
+        "durationSeconds": 4898
+      }
     },
     "cheonan-dongnam-district-office": {
       "access": [
         {
-          "stationId": "285001753",
-          "distanceMeters": 242,
-          "durationSeconds": 279
+          "stationId": "285000653",
+          "distanceMeters": 785,
+          "durationSeconds": 765
         },
         {
-          "stationId": "285000668",
-          "distanceMeters": 164,
-          "durationSeconds": 154
+          "stationId": "285000654",
+          "distanceMeters": 740,
+          "durationSeconds": 725
+        },
+        {
+          "stationId": "285000655",
+          "distanceMeters": 451,
+          "durationSeconds": 474
+        },
+        {
+          "stationId": "285000656",
+          "distanceMeters": 448,
+          "durationSeconds": 495
+        },
+        {
+          "stationId": "285000659",
+          "distanceMeters": 864,
+          "durationSeconds": 896
+        },
+        {
+          "stationId": "285000660",
+          "distanceMeters": 860,
+          "durationSeconds": 892
+        },
+        {
+          "stationId": "285000661",
+          "distanceMeters": 998,
+          "durationSeconds": 998
+        },
+        {
+          "stationId": "285000662",
+          "distanceMeters": 997,
+          "durationSeconds": 1000,
+          "pedestrianRouting": "shortest"
+        },
+        {
+          "stationId": "285000663",
+          "distanceMeters": 817,
+          "durationSeconds": 830
+        },
+        {
+          "stationId": "285000664",
+          "distanceMeters": 744,
+          "durationSeconds": 769
+        },
+        {
+          "stationId": "285000665",
+          "distanceMeters": 564,
+          "durationSeconds": 595
+        },
+        {
+          "stationId": "285000666",
+          "distanceMeters": 437,
+          "durationSeconds": 466
         },
         {
           "stationId": "285000667",
@@ -314,23 +1460,191 @@
           "durationSeconds": 167
         },
         {
+          "stationId": "285000668",
+          "distanceMeters": 164,
+          "durationSeconds": 154
+        },
+        {
           "stationId": "285000669",
           "distanceMeters": 531,
           "durationSeconds": 548
+        },
+        {
+          "stationId": "285000670",
+          "distanceMeters": 525,
+          "durationSeconds": 553
+        },
+        {
+          "stationId": "285000671",
+          "distanceMeters": 769,
+          "durationSeconds": 781
+        },
+        {
+          "stationId": "285000672",
+          "distanceMeters": 760,
+          "durationSeconds": 771
+        },
+        {
+          "stationId": "285000673",
+          "distanceMeters": 921,
+          "durationSeconds": 1008,
+          "pedestrianRouting": "shortest"
+        },
+        {
+          "stationId": "285000674",
+          "distanceMeters": 935,
+          "durationSeconds": 1019,
+          "pedestrianRouting": "shortest"
+        },
+        {
+          "stationId": "285000677",
+          "distanceMeters": 364,
+          "durationSeconds": 379
+        },
+        {
+          "stationId": "285000678",
+          "distanceMeters": 396,
+          "durationSeconds": 399
+        },
+        {
+          "stationId": "285000679",
+          "distanceMeters": 765,
+          "durationSeconds": 724
+        },
+        {
+          "stationId": "285000680",
+          "distanceMeters": 810,
+          "durationSeconds": 769
+        },
+        {
+          "stationId": "285000691",
+          "distanceMeters": 879,
+          "durationSeconds": 975,
+          "pedestrianRouting": "shortest"
+        },
+        {
+          "stationId": "285000692",
+          "distanceMeters": 870,
+          "durationSeconds": 1011,
+          "pedestrianRouting": "shortest"
+        },
+        {
+          "stationId": "285000693",
+          "distanceMeters": 838,
+          "durationSeconds": 952,
+          "pedestrianRouting": "shortest"
+        },
+        {
+          "stationId": "285000695",
+          "distanceMeters": 940,
+          "durationSeconds": 1026,
+          "pedestrianRouting": "shortest"
+        },
+        {
+          "stationId": "285000699",
+          "distanceMeters": 876,
+          "durationSeconds": 1052,
+          "pedestrianRouting": "shortest"
+        },
+        {
+          "stationId": "285000703",
+          "distanceMeters": 594,
+          "durationSeconds": 537
+        },
+        {
+          "stationId": "285000704",
+          "distanceMeters": 638,
+          "durationSeconds": 682
+        },
+        {
+          "stationId": "285000705",
+          "distanceMeters": 748,
+          "durationSeconds": 721
+        },
+        {
+          "stationId": "285000877",
+          "distanceMeters": 571,
+          "durationSeconds": 548
+        },
+        {
+          "stationId": "285000878",
+          "distanceMeters": 548,
+          "durationSeconds": 537
+        },
+        {
+          "stationId": "285001591",
+          "distanceMeters": 280,
+          "durationSeconds": 256
+        },
+        {
+          "stationId": "285001753",
+          "distanceMeters": 242,
+          "durationSeconds": 279
+        },
+        {
+          "stationId": "285071972",
+          "distanceMeters": 836,
+          "durationSeconds": 950,
+          "pedestrianRouting": "shortest"
+        },
+        {
+          "stationId": "285071974",
+          "distanceMeters": 922,
+          "durationSeconds": 984,
+          "pedestrianRouting": "shortest"
+        },
+        {
+          "stationId": "285071975",
+          "distanceMeters": 763,
+          "durationSeconds": 774
+        },
+        {
+          "stationId": "285071976",
+          "distanceMeters": 292,
+          "durationSeconds": 268
+        },
+        {
+          "stationId": "285072004",
+          "distanceMeters": 798,
+          "durationSeconds": 777
+        },
+        {
+          "stationId": "285072005",
+          "distanceMeters": 464,
+          "durationSeconds": 486
         }
       ],
       "directWalk": {
-        "distanceMeters": 1794,
-        "durationSeconds": 1695
-      },
-      "directWalkRetrievedAt": "2026-11-11T07:47:42.429181+00:00"
+        "distanceMeters": 1978,
+        "durationSeconds": 1865
+      }
     },
     "cheonan-seobuk-district-office": {
       "access": [
         {
-          "stationId": "285002140",
-          "distanceMeters": 216,
-          "durationSeconds": 148
+          "stationId": "285000314",
+          "distanceMeters": 920,
+          "durationSeconds": 897
+        },
+        {
+          "stationId": "285000528",
+          "distanceMeters": 914,
+          "durationSeconds": 867
+        },
+        {
+          "stationId": "285000529",
+          "distanceMeters": 879,
+          "durationSeconds": 832
+        },
+        {
+          "stationId": "285000530",
+          "distanceMeters": 550,
+          "durationSeconds": 512
+        },
+        {
+          "stationId": "285000531",
+          "distanceMeters": 206,
+          "durationSeconds": 186
         },
         {
           "stationId": "285000532",
@@ -338,24 +1652,138 @@
           "durationSeconds": 119
         },
         {
-          "stationId": "285055671",
-          "distanceMeters": 378,
-          "durationSeconds": 331
+          "stationId": "285000533",
+          "distanceMeters": 351,
+          "durationSeconds": 306
+        },
+        {
+          "stationId": "285000534",
+          "distanceMeters": 384,
+          "durationSeconds": 339
+        },
+        {
+          "stationId": "285001257",
+          "distanceMeters": 543,
+          "durationSeconds": 506
+        },
+        {
+          "stationId": "285002140",
+          "distanceMeters": 216,
+          "durationSeconds": 148
         },
         {
           "stationId": "285002298",
           "distanceMeters": 421,
           "durationSeconds": 404
+        },
+        {
+          "stationId": "285055671",
+          "distanceMeters": 378,
+          "durationSeconds": 331
+        },
+        {
+          "stationId": "285071482",
+          "distanceMeters": 788,
+          "durationSeconds": 624
+        },
+        {
+          "stationId": "285071737",
+          "distanceMeters": 796,
+          "durationSeconds": 773
+        },
+        {
+          "stationId": "285071738",
+          "distanceMeters": 688,
+          "durationSeconds": 710
         }
       ],
       "directWalk": {
-        "distanceMeters": 7664,
-        "durationSeconds": 7109
-      },
-      "directWalkRetrievedAt": "2026-11-11T07:47:43.806779+00:00"
+        "distanceMeters": 7733,
+        "durationSeconds": 7210
+      }
     },
     "cheonan-tax-office": {
       "access": [
+        {
+          "stationId": "285000774",
+          "distanceMeters": 945,
+          "durationSeconds": 798
+        },
+        {
+          "stationId": "285001811",
+          "distanceMeters": 944,
+          "durationSeconds": 796
+        },
+        {
+          "stationId": "285001971",
+          "distanceMeters": 510,
+          "durationSeconds": 518
+        },
+        {
+          "stationId": "285001972",
+          "distanceMeters": 513,
+          "durationSeconds": 522
+        },
+        {
+          "stationId": "285002042",
+          "distanceMeters": 669,
+          "durationSeconds": 659
+        },
+        {
+          "stationId": "285002043",
+          "distanceMeters": 674,
+          "durationSeconds": 665
+        },
+        {
+          "stationId": "285002046",
+          "distanceMeters": 699,
+          "durationSeconds": 631
+        },
+        {
+          "stationId": "285002066",
+          "distanceMeters": 696,
+          "durationSeconds": 626
+        },
+        {
+          "stationId": "285002213",
+          "distanceMeters": 785,
+          "durationSeconds": 765
+        },
+        {
+          "stationId": "285002214",
+          "distanceMeters": 778,
+          "durationSeconds": 768
+        },
+        {
+          "stationId": "285002215",
+          "distanceMeters": 532,
+          "durationSeconds": 535
+        },
+        {
+          "stationId": "285002216",
+          "distanceMeters": 525,
+          "durationSeconds": 554
+        },
+        {
+          "stationId": "285002226",
+          "distanceMeters": 934,
+          "durationSeconds": 945
+        },
+        {
+          "stationId": "285010003",
+          "distanceMeters": 986,
+          "durationSeconds": 952
+        },
+        {
+          "stationId": "285010005",
+          "distanceMeters": 791,
+          "durationSeconds": 789
+        },
+        {
+          "stationId": "285010006",
+          "distanceMeters": 740,
+          "durationSeconds": 744
+        },
         {
           "stationId": "285071564",
           "distanceMeters": 475,
@@ -367,33 +1795,86 @@
           "durationSeconds": 288
         },
         {
-          "stationId": "285001972",
-          "distanceMeters": 513,
-          "durationSeconds": 522
+          "stationId": "285071639",
+          "distanceMeters": 638,
+          "durationSeconds": 649
         },
         {
-          "stationId": "285001971",
-          "distanceMeters": 510,
-          "durationSeconds": 518
+          "stationId": "285071925",
+          "distanceMeters": 934,
+          "durationSeconds": 918
         }
       ],
       "directWalk": {
-        "distanceMeters": 4817,
-        "durationSeconds": 4460
-      },
-      "directWalkRetrievedAt": "2026-11-11T07:47:45.186737+00:00"
+        "distanceMeters": 4650,
+        "durationSeconds": 4451
+      }
     },
     "cheonan-national-pension-office": {
       "access": [
         {
-          "stationId": "285002043",
-          "distanceMeters": 64,
-          "durationSeconds": 76
+          "stationId": "285000737",
+          "distanceMeters": 953,
+          "durationSeconds": 1195,
+          "pedestrianRouting": "shortest"
         },
         {
-          "stationId": "285002042",
-          "distanceMeters": 59,
-          "durationSeconds": 71
+          "stationId": "285000738",
+          "distanceMeters": 976,
+          "durationSeconds": 1206,
+          "pedestrianRouting": "shortest"
+        },
+        {
+          "stationId": "285000750",
+          "distanceMeters": 995,
+          "durationSeconds": 1076,
+          "pedestrianRouting": "shortest"
+        },
+        {
+          "stationId": "285000753",
+          "distanceMeters": 555,
+          "durationSeconds": 636
+        },
+        {
+          "stationId": "285000754",
+          "distanceMeters": 746,
+          "durationSeconds": 657
+        },
+        {
+          "stationId": "285000755",
+          "distanceMeters": 771,
+          "durationSeconds": 674
+        },
+        {
+          "stationId": "285000774",
+          "distanceMeters": 977,
+          "durationSeconds": 864
+        },
+        {
+          "stationId": "285001767",
+          "distanceMeters": 740,
+          "durationSeconds": 678
+        },
+        {
+          "stationId": "285001811",
+          "distanceMeters": 976,
+          "durationSeconds": 862
+        },
+        {
+          "stationId": "285001812",
+          "distanceMeters": 576,
+          "durationSeconds": 464
+        },
+        {
+          "stationId": "285001950",
+          "distanceMeters": 891,
+          "durationSeconds": 1100,
+          "pedestrianRouting": "shortest"
+        },
+        {
+          "stationId": "285001971",
+          "distanceMeters": 98,
+          "durationSeconds": 86
         },
         {
           "stationId": "285001972",
@@ -401,19 +1882,158 @@
           "durationSeconds": 81
         },
         {
-          "stationId": "285001971",
-          "distanceMeters": 98,
-          "durationSeconds": 86
+          "stationId": "285002038",
+          "distanceMeters": 469,
+          "durationSeconds": 566
+        },
+        {
+          "stationId": "285002039",
+          "distanceMeters": 717,
+          "durationSeconds": 646
+        },
+        {
+          "stationId": "285002040",
+          "distanceMeters": 784,
+          "durationSeconds": 693
+        },
+        {
+          "stationId": "285002041",
+          "distanceMeters": 713,
+          "durationSeconds": 649
+        },
+        {
+          "stationId": "285002042",
+          "distanceMeters": 59,
+          "durationSeconds": 71
+        },
+        {
+          "stationId": "285002043",
+          "distanceMeters": 64,
+          "durationSeconds": 76
+        },
+        {
+          "stationId": "285002046",
+          "distanceMeters": 850,
+          "durationSeconds": 806
+        },
+        {
+          "stationId": "285002066",
+          "distanceMeters": 847,
+          "durationSeconds": 802
+        },
+        {
+          "stationId": "285002213",
+          "distanceMeters": 936,
+          "durationSeconds": 941
+        },
+        {
+          "stationId": "285002214",
+          "distanceMeters": 926,
+          "durationSeconds": 906
+        },
+        {
+          "stationId": "285002215",
+          "distanceMeters": 683,
+          "durationSeconds": 711
+        },
+        {
+          "stationId": "285002216",
+          "distanceMeters": 632,
+          "durationSeconds": 692
+        },
+        {
+          "stationId": "285002226",
+          "distanceMeters": 877,
+          "durationSeconds": 823
+        },
+        {
+          "stationId": "285010003",
+          "distanceMeters": 443,
+          "durationSeconds": 400
+        },
+        {
+          "stationId": "285010005",
+          "distanceMeters": 248,
+          "durationSeconds": 237
+        },
+        {
+          "stationId": "285010006",
+          "distanceMeters": 197,
+          "durationSeconds": 192
+        },
+        {
+          "stationId": "285071564",
+          "distanceMeters": 284,
+          "durationSeconds": 309
+        },
+        {
+          "stationId": "285071565",
+          "distanceMeters": 430,
+          "durationSeconds": 464
+        },
+        {
+          "stationId": "285071639",
+          "distanceMeters": 924,
+          "durationSeconds": 944
+        },
+        {
+          "stationId": "285071809",
+          "distanceMeters": 878,
+          "durationSeconds": 790
+        },
+        {
+          "stationId": "285071810",
+          "distanceMeters": 878,
+          "durationSeconds": 791
+        },
+        {
+          "stationId": "285071925",
+          "distanceMeters": 793,
+          "durationSeconds": 757
         }
       ],
       "directWalk": {
-        "distanceMeters": 4173,
-        "durationSeconds": 3956
-      },
-      "directWalkRetrievedAt": "2026-11-11T07:47:46.568713+00:00"
+        "distanceMeters": 4107,
+        "durationSeconds": 3913
+      }
     },
     "cheonan-central-market": {
       "access": [
+        {
+          "stationId": "285000655",
+          "distanceMeters": 793,
+          "durationSeconds": 705
+        },
+        {
+          "stationId": "285000656",
+          "distanceMeters": 775,
+          "durationSeconds": 696
+        },
+        {
+          "stationId": "285000659",
+          "distanceMeters": 484,
+          "durationSeconds": 431
+        },
+        {
+          "stationId": "285000660",
+          "distanceMeters": 488,
+          "durationSeconds": 435
+        },
+        {
+          "stationId": "285000661",
+          "distanceMeters": 253,
+          "durationSeconds": 228
+        },
+        {
+          "stationId": "285000662",
+          "distanceMeters": 275,
+          "durationSeconds": 254
+        },
+        {
+          "stationId": "285000663",
+          "distanceMeters": 263,
+          "durationSeconds": 239
+        },
         {
           "stationId": "285000664",
           "distanceMeters": 190,
@@ -425,33 +2045,202 @@
           "durationSeconds": 184
         },
         {
-          "stationId": "285000663",
-          "distanceMeters": 263,
-          "durationSeconds": 239
+          "stationId": "285000666",
+          "distanceMeters": 334,
+          "durationSeconds": 284
         },
         {
-          "stationId": "285000662",
-          "distanceMeters": 275,
-          "durationSeconds": 254
+          "stationId": "285000667",
+          "distanceMeters": 647,
+          "durationSeconds": 571
+        },
+        {
+          "stationId": "285000668",
+          "distanceMeters": 632,
+          "durationSeconds": 558
+        },
+        {
+          "stationId": "285000669",
+          "distanceMeters": 543,
+          "durationSeconds": 480
+        },
+        {
+          "stationId": "285000670",
+          "distanceMeters": 560,
+          "durationSeconds": 519
+        },
+        {
+          "stationId": "285000671",
+          "distanceMeters": 391,
+          "durationSeconds": 365
+        },
+        {
+          "stationId": "285000672",
+          "distanceMeters": 400,
+          "durationSeconds": 373
+        },
+        {
+          "stationId": "285000673",
+          "distanceMeters": 667,
+          "durationSeconds": 636
+        },
+        {
+          "stationId": "285000674",
+          "distanceMeters": 750,
+          "durationSeconds": 656
+        },
+        {
+          "stationId": "285000675",
+          "distanceMeters": 449,
+          "durationSeconds": 402
+        },
+        {
+          "stationId": "285000676",
+          "distanceMeters": 495,
+          "durationSeconds": 435
+        },
+        {
+          "stationId": "285000677",
+          "distanceMeters": 819,
+          "durationSeconds": 775
+        },
+        {
+          "stationId": "285000678",
+          "distanceMeters": 923,
+          "durationSeconds": 848
+        },
+        {
+          "stationId": "285000701",
+          "distanceMeters": 562,
+          "durationSeconds": 510
+        },
+        {
+          "stationId": "285000702",
+          "distanceMeters": 840,
+          "durationSeconds": 768
+        },
+        {
+          "stationId": "285000703",
+          "distanceMeters": 839,
+          "durationSeconds": 658
+        },
+        {
+          "stationId": "285000704",
+          "distanceMeters": 904,
+          "durationSeconds": 826
+        },
+        {
+          "stationId": "285000705",
+          "distanceMeters": 993,
+          "durationSeconds": 842
+        },
+        {
+          "stationId": "285000757",
+          "distanceMeters": 804,
+          "durationSeconds": 745
+        },
+        {
+          "stationId": "285000758",
+          "distanceMeters": 775,
+          "durationSeconds": 689
+        },
+        {
+          "stationId": "285000759",
+          "distanceMeters": 785,
+          "durationSeconds": 700
+        },
+        {
+          "stationId": "285000875",
+          "distanceMeters": 898,
+          "durationSeconds": 801
+        },
+        {
+          "stationId": "285000876",
+          "distanceMeters": 894,
+          "durationSeconds": 794
+        },
+        {
+          "stationId": "285000877",
+          "distanceMeters": 893,
+          "durationSeconds": 798
+        },
+        {
+          "stationId": "285000878",
+          "distanceMeters": 900,
+          "durationSeconds": 803
+        },
+        {
+          "stationId": "285001590",
+          "distanceMeters": 519,
+          "durationSeconds": 457
+        },
+        {
+          "stationId": "285001591",
+          "distanceMeters": 807,
+          "durationSeconds": 705
+        },
+        {
+          "stationId": "285001753",
+          "distanceMeters": 854,
+          "durationSeconds": 731
+        },
+        {
+          "stationId": "285001814",
+          "distanceMeters": 774,
+          "durationSeconds": 696
+        },
+        {
+          "stationId": "285071974",
+          "distanceMeters": 668,
+          "durationSeconds": 613
+        },
+        {
+          "stationId": "285071975",
+          "distanceMeters": 397,
+          "durationSeconds": 371
+        },
+        {
+          "stationId": "285071976",
+          "distanceMeters": 819,
+          "durationSeconds": 718
+        },
+        {
+          "stationId": "285072005",
+          "distanceMeters": 806,
+          "durationSeconds": 718
         }
       ],
       "directWalk": {
-        "distanceMeters": 2225,
-        "durationSeconds": 2032
-      },
-      "directWalkRetrievedAt": "2026-11-11T07:47:48.033128+00:00"
+        "distanceMeters": 2446,
+        "durationSeconds": 2265
+      }
     },
     "cheonan-seongjeong-market": {
       "access": [
         {
-          "stationId": "285000953",
-          "distanceMeters": 236,
-          "durationSeconds": 210
+          "stationId": "285000879",
+          "distanceMeters": 785,
+          "durationSeconds": 706
         },
         {
-          "stationId": "285000952",
-          "distanceMeters": 207,
-          "durationSeconds": 171
+          "stationId": "285000880",
+          "distanceMeters": 855,
+          "durationSeconds": 767
+        },
+        {
+          "stationId": "285000897",
+          "distanceMeters": 835,
+          "durationSeconds": 772
+        },
+        {
+          "stationId": "285000901",
+          "distanceMeters": 526,
+          "durationSeconds": 507
+        },
+        {
+          "stationId": "285000902",
+          "distanceMeters": 498,
+          "durationSeconds": 437
         },
         {
           "stationId": "285000903",
@@ -462,25 +2251,196 @@
           "stationId": "285000904",
           "distanceMeters": 266,
           "durationSeconds": 240
+        },
+        {
+          "stationId": "285000905",
+          "distanceMeters": 534,
+          "durationSeconds": 486
+        },
+        {
+          "stationId": "285000906",
+          "distanceMeters": 541,
+          "durationSeconds": 493
+        },
+        {
+          "stationId": "285000907",
+          "distanceMeters": 753,
+          "durationSeconds": 691
+        },
+        {
+          "stationId": "285000908",
+          "distanceMeters": 778,
+          "durationSeconds": 686
+        },
+        {
+          "stationId": "285000909",
+          "distanceMeters": 970,
+          "durationSeconds": 882
+        },
+        {
+          "stationId": "285000923",
+          "distanceMeters": 906,
+          "durationSeconds": 797
+        },
+        {
+          "stationId": "285000924",
+          "distanceMeters": 885,
+          "durationSeconds": 721
+        },
+        {
+          "stationId": "285000945",
+          "distanceMeters": 905,
+          "durationSeconds": 772
+        },
+        {
+          "stationId": "285000946",
+          "distanceMeters": 853,
+          "durationSeconds": 732
+        },
+        {
+          "stationId": "285000947",
+          "distanceMeters": 587,
+          "durationSeconds": 535
+        },
+        {
+          "stationId": "285000948",
+          "distanceMeters": 662,
+          "durationSeconds": 543
+        },
+        {
+          "stationId": "285000949",
+          "distanceMeters": 874,
+          "durationSeconds": 738
+        },
+        {
+          "stationId": "285000950",
+          "distanceMeters": 994,
+          "durationSeconds": 903
+        },
+        {
+          "stationId": "285000952",
+          "distanceMeters": 207,
+          "durationSeconds": 171
+        },
+        {
+          "stationId": "285000953",
+          "distanceMeters": 236,
+          "durationSeconds": 210
+        },
+        {
+          "stationId": "285001519",
+          "distanceMeters": 823,
+          "durationSeconds": 779
+        },
+        {
+          "stationId": "285001520",
+          "distanceMeters": 737,
+          "durationSeconds": 681
+        },
+        {
+          "stationId": "285001606",
+          "distanceMeters": 623,
+          "durationSeconds": 579
+        },
+        {
+          "stationId": "285001759",
+          "distanceMeters": 979,
+          "durationSeconds": 874,
+          "pedestrianRouting": "shortest"
+        },
+        {
+          "stationId": "285001760",
+          "distanceMeters": 966,
+          "durationSeconds": 872,
+          "pedestrianRouting": "shortest"
+        },
+        {
+          "stationId": "285010007",
+          "distanceMeters": 695,
+          "durationSeconds": 656
+        },
+        {
+          "stationId": "285071481",
+          "distanceMeters": 735,
+          "durationSeconds": 699
+        },
+        {
+          "stationId": "285071549",
+          "distanceMeters": 817,
+          "durationSeconds": 794
+        },
+        {
+          "stationId": "285071550",
+          "distanceMeters": 819,
+          "durationSeconds": 796
+        },
+        {
+          "stationId": "285071912",
+          "distanceMeters": 745,
+          "durationSeconds": 697
+        },
+        {
+          "stationId": "285071965",
+          "distanceMeters": 653,
+          "durationSeconds": 533
+        },
+        {
+          "stationId": "285071966",
+          "distanceMeters": 620,
+          "durationSeconds": 577
+        },
+        {
+          "stationId": "285071967",
+          "distanceMeters": 818,
+          "durationSeconds": 752
+        },
+        {
+          "stationId": "285071994",
+          "distanceMeters": 762,
+          "durationSeconds": 703
+        },
+        {
+          "stationId": "285072001",
+          "distanceMeters": 842,
+          "durationSeconds": 772
+        },
+        {
+          "stationId": "285072002",
+          "distanceMeters": 862,
+          "durationSeconds": 781
         }
       ],
       "directWalk": {
-        "distanceMeters": 1920,
-        "durationSeconds": 1731
-      },
-      "directWalkRetrievedAt": "2026-11-11T07:47:49.487591+00:00"
+        "distanceMeters": 2013,
+        "durationSeconds": 1854
+      }
     },
     "cheonan-byeongcheon-market": {
       "access": [
         {
-          "stationId": "285001143",
-          "distanceMeters": 98,
-          "durationSeconds": 86
+          "stationId": "285000402",
+          "distanceMeters": 496,
+          "durationSeconds": 281
         },
         {
-          "stationId": "285001916",
-          "distanceMeters": 87,
-          "durationSeconds": 88
+          "stationId": "285000428",
+          "distanceMeters": 188,
+          "durationSeconds": 186
+        },
+        {
+          "stationId": "285000429",
+          "distanceMeters": 252,
+          "durationSeconds": 251
+        },
+        {
+          "stationId": "285000430",
+          "distanceMeters": 495,
+          "durationSeconds": 471
+        },
+        {
+          "stationId": "285000431",
+          "distanceMeters": 800,
+          "durationSeconds": 743
         },
         {
           "stationId": "285000449",
@@ -488,23 +2448,142 @@
           "durationSeconds": 16
         },
         {
+          "stationId": "285000450",
+          "distanceMeters": 413,
+          "durationSeconds": 361
+        },
+        {
+          "stationId": "285000451",
+          "distanceMeters": 582,
+          "durationSeconds": 519
+        },
+        {
+          "stationId": "285000452",
+          "distanceMeters": 865,
+          "durationSeconds": 803
+        },
+        {
+          "stationId": "285000453",
+          "distanceMeters": 864,
+          "durationSeconds": 802
+        },
+        {
+          "stationId": "285001143",
+          "distanceMeters": 98,
+          "durationSeconds": 86
+        },
+        {
+          "stationId": "285001165",
+          "distanceMeters": 586,
+          "durationSeconds": 522
+        },
+        {
           "stationId": "285001915",
           "distanceMeters": 93,
           "durationSeconds": 93
+        },
+        {
+          "stationId": "285001916",
+          "distanceMeters": 87,
+          "durationSeconds": 88
+        },
+        {
+          "stationId": "285002069",
+          "distanceMeters": 222,
+          "durationSeconds": 211
+        },
+        {
+          "stationId": "285002070",
+          "distanceMeters": 495,
+          "durationSeconds": 451
+        },
+        {
+          "stationId": "285002252",
+          "distanceMeters": 484,
+          "durationSeconds": 449
+        },
+        {
+          "stationId": "285002253",
+          "distanceMeters": 216,
+          "durationSeconds": 205
+        },
+        {
+          "stationId": "285002265",
+          "distanceMeters": 769,
+          "durationSeconds": 703
+        },
+        {
+          "stationId": "285071455",
+          "distanceMeters": 969,
+          "durationSeconds": 927
+        },
+        {
+          "stationId": "285071456",
+          "distanceMeters": 974,
+          "durationSeconds": 885
+        },
+        {
+          "stationId": "285071918",
+          "distanceMeters": 547,
+          "durationSeconds": 513
+        },
+        {
+          "stationId": "285071952",
+          "distanceMeters": 668,
+          "durationSeconds": 611
         }
       ],
       "directWalk": {
-        "distanceMeters": 17815,
-        "durationSeconds": 17224
-      },
-      "directWalkRetrievedAt": "2026-11-11T07:47:50.911433+00:00"
+        "distanceMeters": 17749,
+        "durationSeconds": 17180
+      }
     },
     "cheonan-sinan-office": {
       "access": [
         {
-          "stationId": "285000706",
-          "distanceMeters": 309,
-          "durationSeconds": 308
+          "stationId": "285000649",
+          "distanceMeters": 924,
+          "durationSeconds": 922
+        },
+        {
+          "stationId": "285000650",
+          "distanceMeters": 912,
+          "durationSeconds": 889
+        },
+        {
+          "stationId": "285000681",
+          "distanceMeters": 999,
+          "durationSeconds": 961
+        },
+        {
+          "stationId": "285000682",
+          "distanceMeters": 951,
+          "durationSeconds": 916
+        },
+        {
+          "stationId": "285000683",
+          "distanceMeters": 745,
+          "durationSeconds": 717
+        },
+        {
+          "stationId": "285000684",
+          "distanceMeters": 752,
+          "durationSeconds": 723
+        },
+        {
+          "stationId": "285000685",
+          "distanceMeters": 555,
+          "durationSeconds": 537
+        },
+        {
+          "stationId": "285000686",
+          "distanceMeters": 489,
+          "durationSeconds": 508
+        },
+        {
+          "stationId": "285000687",
+          "distanceMeters": 668,
+          "durationSeconds": 663
         },
         {
           "stationId": "285000688",
@@ -517,19 +2596,103 @@
           "durationSeconds": 395
         },
         {
+          "stationId": "285000690",
+          "distanceMeters": 870,
+          "durationSeconds": 857
+        },
+        {
+          "stationId": "285000694",
+          "distanceMeters": 891,
+          "durationSeconds": 933
+        },
+        {
+          "stationId": "285000706",
+          "distanceMeters": 309,
+          "durationSeconds": 308
+        },
+        {
           "stationId": "285000707",
           "distanceMeters": 589,
           "durationSeconds": 547
+        },
+        {
+          "stationId": "285001061",
+          "distanceMeters": 811,
+          "durationSeconds": 723
+        },
+        {
+          "stationId": "285001062",
+          "distanceMeters": 745,
+          "durationSeconds": 690
+        },
+        {
+          "stationId": "285010014",
+          "distanceMeters": 465,
+          "durationSeconds": 470
+        },
+        {
+          "stationId": "285010125",
+          "distanceMeters": 523,
+          "durationSeconds": 503
+        },
+        {
+          "stationId": "285071675",
+          "distanceMeters": 495,
+          "durationSeconds": 461
         }
       ],
       "directWalk": {
-        "distanceMeters": 555,
-        "durationSeconds": 549
-      },
-      "directWalkRetrievedAt": "2026-11-11T07:47:52.308156+00:00"
+        "distanceMeters": 489,
+        "durationSeconds": 505
+      }
     },
     "cheonan-dankook-university": {
       "access": [
+        {
+          "stationId": "285000639",
+          "distanceMeters": 814,
+          "durationSeconds": 770
+        },
+        {
+          "stationId": "285000640",
+          "distanceMeters": 725,
+          "durationSeconds": 700
+        },
+        {
+          "stationId": "285000641",
+          "distanceMeters": 806,
+          "durationSeconds": 718
+        },
+        {
+          "stationId": "285000642",
+          "distanceMeters": 923,
+          "durationSeconds": 946
+        },
+        {
+          "stationId": "285001049",
+          "distanceMeters": 921,
+          "durationSeconds": 878
+        },
+        {
+          "stationId": "285001052",
+          "distanceMeters": 942,
+          "durationSeconds": 969
+        },
+        {
+          "stationId": "285001053",
+          "distanceMeters": 916,
+          "durationSeconds": 986
+        },
+        {
+          "stationId": "285001055",
+          "distanceMeters": 941,
+          "durationSeconds": 919
+        },
+        {
+          "stationId": "285001056",
+          "distanceMeters": 944,
+          "durationSeconds": 922
+        },
         {
           "stationId": "285001478",
           "distanceMeters": 363,
@@ -541,9 +2704,14 @@
           "durationSeconds": 761
         },
         {
-          "stationId": "285001052",
-          "distanceMeters": 942,
-          "durationSeconds": 969
+          "stationId": "285001715",
+          "distanceMeters": 772,
+          "durationSeconds": 748
+        },
+        {
+          "stationId": "285001754",
+          "distanceMeters": 917,
+          "durationSeconds": 987
         },
         {
           "stationId": "285071397",
@@ -552,17 +2720,21 @@
         }
       ],
       "directWalk": {
-        "distanceMeters": 2811,
-        "durationSeconds": 2713
-      },
-      "directWalkRetrievedAt": "2026-11-11T07:47:53.682150+00:00"
+        "distanceMeters": 2715,
+        "durationSeconds": 2627
+      }
     },
     "cheonan-sangmyung-university": {
       "access": [
         {
-          "stationId": "285001594",
-          "distanceMeters": 677,
-          "durationSeconds": 624
+          "stationId": "285000642",
+          "distanceMeters": 787,
+          "durationSeconds": 819
+        },
+        {
+          "stationId": "285001046",
+          "distanceMeters": 888,
+          "durationSeconds": 744
         },
         {
           "stationId": "285001047",
@@ -575,28 +2747,40 @@
           "durationSeconds": 650
         },
         {
-          "stationId": "285001046",
-          "distanceMeters": 888,
-          "durationSeconds": 744
+          "stationId": "285001049",
+          "distanceMeters": 956,
+          "durationSeconds": 1202,
+          "pedestrianRouting": "shortest"
+        },
+        {
+          "stationId": "285001052",
+          "distanceMeters": 780,
+          "durationSeconds": 812
+        },
+        {
+          "stationId": "285001594",
+          "distanceMeters": 677,
+          "durationSeconds": 624
         }
       ],
       "directWalk": {
-        "distanceMeters": 3162,
-        "durationSeconds": 3112
-      },
-      "directWalkRetrievedAt": "2026-11-11T07:47:55.079651+00:00"
+        "distanceMeters": 3061,
+        "durationSeconds": 3051
+      }
     },
     "cheonan-hoseo-university": {
       "access": [
         {
-          "stationId": "285071805",
-          "distanceMeters": 724,
-          "durationSeconds": 744
+          "stationId": "285001043",
+          "distanceMeters": 824,
+          "durationSeconds": 778,
+          "pedestrianRouting": "shortest"
         },
         {
-          "stationId": "285071806",
-          "distanceMeters": 735,
-          "durationSeconds": 724
+          "stationId": "285001044",
+          "distanceMeters": 779,
+          "durationSeconds": 731,
+          "pedestrianRouting": "shortest"
         },
         {
           "stationId": "285001046",
@@ -607,25 +2791,65 @@
           "stationId": "285001047",
           "distanceMeters": 359,
           "durationSeconds": 440
+        },
+        {
+          "stationId": "285001048",
+          "distanceMeters": 824,
+          "durationSeconds": 895
+        },
+        {
+          "stationId": "285001594",
+          "distanceMeters": 522,
+          "durationSeconds": 610
+        },
+        {
+          "stationId": "285002190",
+          "distanceMeters": 950,
+          "durationSeconds": 907,
+          "pedestrianRouting": "shortest"
+        },
+        {
+          "stationId": "285071745",
+          "distanceMeters": 925,
+          "durationSeconds": 965
+        },
+        {
+          "stationId": "285071746",
+          "distanceMeters": 918,
+          "durationSeconds": 959
+        },
+        {
+          "stationId": "285071805",
+          "distanceMeters": 724,
+          "durationSeconds": 744
+        },
+        {
+          "stationId": "285071806",
+          "distanceMeters": 735,
+          "durationSeconds": 724
         }
       ],
       "directWalk": {
-        "distanceMeters": 3378,
-        "durationSeconds": 3412
-      },
-      "directWalkRetrievedAt": "2026-11-11T07:47:56.464561+00:00"
+        "distanceMeters": 3277,
+        "durationSeconds": 3351
+      }
     },
     "cheonan-koreatech": {
       "access": [
         {
-          "stationId": "285000406",
-          "distanceMeters": 605,
-          "durationSeconds": 614
+          "stationId": "285000403",
+          "distanceMeters": 999,
+          "durationSeconds": 1031
         },
         {
           "stationId": "285000405",
           "distanceMeters": 584,
           "durationSeconds": 659
+        },
+        {
+          "stationId": "285000406",
+          "distanceMeters": 605,
+          "durationSeconds": 614
         },
         {
           "stationId": "285000407",
@@ -636,45 +2860,88 @@
           "stationId": "285000408",
           "distanceMeters": 952,
           "durationSeconds": 914
+        },
+        {
+          "stationId": "285010090",
+          "distanceMeters": 948,
+          "durationSeconds": 957
         }
       ],
       "directWalk": {
-        "distanceMeters": 16867,
-        "durationSeconds": 16392
-      },
-      "directWalkRetrievedAt": "2026-11-11T07:47:57.862702+00:00"
+        "distanceMeters": 16801,
+        "durationSeconds": 16349
+      }
     },
     "cheonan-independence-hall": {
       "access": [
-        {
-          "stationId": "285001783",
-          "distanceMeters": 1097,
-          "durationSeconds": 1091
-        },
-        {
-          "stationId": "285001782",
-          "distanceMeters": 917,
-          "durationSeconds": 859
-        },
         {
           "stationId": "285000521",
           "distanceMeters": 997,
           "durationSeconds": 972
         },
         {
-          "stationId": "285000520",
-          "distanceMeters": 1025,
-          "durationSeconds": 972
+          "stationId": "285001782",
+          "distanceMeters": 917,
+          "durationSeconds": 859
         }
       ],
       "directWalk": {
-        "distanceMeters": 10684,
-        "durationSeconds": 10959
-      },
-      "directWalkRetrievedAt": "2026-11-11T07:47:59.313277+00:00"
+        "distanceMeters": 10618,
+        "durationSeconds": 10915
+      }
     },
     "cheonan-museum": {
       "access": [
+        {
+          "stationId": "285000734",
+          "distanceMeters": 884,
+          "durationSeconds": 808
+        },
+        {
+          "stationId": "285000735",
+          "distanceMeters": 783,
+          "durationSeconds": 745
+        },
+        {
+          "stationId": "285000736",
+          "distanceMeters": 747,
+          "durationSeconds": 731
+        },
+        {
+          "stationId": "285000737",
+          "distanceMeters": 573,
+          "durationSeconds": 541
+        },
+        {
+          "stationId": "285000738",
+          "distanceMeters": 596,
+          "durationSeconds": 552
+        },
+        {
+          "stationId": "285000747",
+          "distanceMeters": 790,
+          "durationSeconds": 754
+        },
+        {
+          "stationId": "285000750",
+          "distanceMeters": 415,
+          "durationSeconds": 392
+        },
+        {
+          "stationId": "285000777",
+          "distanceMeters": 879,
+          "durationSeconds": 842
+        },
+        {
+          "stationId": "285000778",
+          "distanceMeters": 902,
+          "durationSeconds": 860
+        },
+        {
+          "stationId": "285001588",
+          "distanceMeters": 863,
+          "durationSeconds": 806
+        },
         {
           "stationId": "285001950",
           "distanceMeters": 121,
@@ -686,33 +2953,154 @@
           "durationSeconds": 611
         },
         {
-          "stationId": "285000737",
-          "distanceMeters": 573,
-          "durationSeconds": 541
+          "stationId": "285001971",
+          "distanceMeters": 999,
+          "durationSeconds": 1182,
+          "pedestrianRouting": "shortest"
         },
         {
-          "stationId": "285000738",
-          "distanceMeters": 596,
-          "durationSeconds": 552
+          "stationId": "285001972",
+          "distanceMeters": 996,
+          "durationSeconds": 1178,
+          "pedestrianRouting": "shortest"
+        },
+        {
+          "stationId": "285002038",
+          "distanceMeters": 907,
+          "durationSeconds": 1052
+        },
+        {
+          "stationId": "285002039",
+          "distanceMeters": 912,
+          "durationSeconds": 1056
+        },
+        {
+          "stationId": "285002042",
+          "distanceMeters": 921,
+          "durationSeconds": 1077
+        },
+        {
+          "stationId": "285002043",
+          "distanceMeters": 916,
+          "durationSeconds": 1072
+        },
+        {
+          "stationId": "285002104",
+          "distanceMeters": 778,
+          "durationSeconds": 792
+        },
+        {
+          "stationId": "285010013",
+          "distanceMeters": 960,
+          "durationSeconds": 879
+        },
+        {
+          "stationId": "285071403",
+          "distanceMeters": 919,
+          "durationSeconds": 830
+        },
+        {
+          "stationId": "285071663",
+          "distanceMeters": 892,
+          "durationSeconds": 808
+        },
+        {
+          "stationId": "285071884",
+          "distanceMeters": 951,
+          "durationSeconds": 913
         }
       ],
       "directWalk": {
-        "distanceMeters": 4240,
-        "durationSeconds": 4027
-      },
-      "directWalkRetrievedAt": "2026-11-11T07:48:00.703843+00:00"
+        "distanceMeters": 4174,
+        "durationSeconds": 3983
+      }
     },
     "cheonan-arario-gallery": {
       "access": [
+        {
+          "stationId": "285000646",
+          "distanceMeters": 895,
+          "durationSeconds": 851
+        },
+        {
+          "stationId": "285000648",
+          "distanceMeters": 867,
+          "durationSeconds": 838
+        },
+        {
+          "stationId": "285000649",
+          "distanceMeters": 702,
+          "durationSeconds": 674
+        },
+        {
+          "stationId": "285000650",
+          "distanceMeters": 674,
+          "durationSeconds": 646
+        },
+        {
+          "stationId": "285000651",
+          "distanceMeters": 951,
+          "durationSeconds": 916
+        },
+        {
+          "stationId": "285000652",
+          "distanceMeters": 988,
+          "durationSeconds": 969
+        },
+        {
+          "stationId": "285000681",
+          "distanceMeters": 960,
+          "durationSeconds": 891
+        },
+        {
+          "stationId": "285000682",
+          "distanceMeters": 912,
+          "durationSeconds": 847
+        },
+        {
+          "stationId": "285000683",
+          "distanceMeters": 638,
+          "durationSeconds": 596
+        },
+        {
+          "stationId": "285000684",
+          "distanceMeters": 631,
+          "durationSeconds": 590
+        },
+        {
+          "stationId": "285000685",
+          "distanceMeters": 233,
+          "durationSeconds": 199
+        },
         {
           "stationId": "285000686",
           "distanceMeters": 137,
           "durationSeconds": 127
         },
         {
-          "stationId": "285010014",
-          "distanceMeters": 143,
-          "durationSeconds": 132
+          "stationId": "285000687",
+          "distanceMeters": 316,
+          "durationSeconds": 282
+        },
+        {
+          "stationId": "285000688",
+          "distanceMeters": 454,
+          "durationSeconds": 481
+        },
+        {
+          "stationId": "285000689",
+          "distanceMeters": 467,
+          "durationSeconds": 510
+        },
+        {
+          "stationId": "285000690",
+          "distanceMeters": 920,
+          "durationSeconds": 972
+        },
+        {
+          "stationId": "285000694",
+          "distanceMeters": 941,
+          "durationSeconds": 1048
         },
         {
           "stationId": "285000706",
@@ -720,28 +3108,182 @@
           "durationSeconds": 190
         },
         {
+          "stationId": "285000707",
+          "distanceMeters": 227,
+          "durationSeconds": 215
+        },
+        {
+          "stationId": "285000708",
+          "distanceMeters": 961,
+          "durationSeconds": 948
+        },
+        {
+          "stationId": "285000709",
+          "distanceMeters": 762,
+          "durationSeconds": 775
+        },
+        {
+          "stationId": "285001061",
+          "distanceMeters": 695,
+          "durationSeconds": 680
+        },
+        {
+          "stationId": "285001062",
+          "distanceMeters": 601,
+          "durationSeconds": 622
+        },
+        {
+          "stationId": "285002084",
+          "distanceMeters": 897,
+          "durationSeconds": 834
+        },
+        {
+          "stationId": "285002085",
+          "distanceMeters": 801,
+          "durationSeconds": 778
+        },
+        {
+          "stationId": "285010014",
+          "distanceMeters": 143,
+          "durationSeconds": 132
+        },
+        {
           "stationId": "285010125",
           "distanceMeters": 201,
           "durationSeconds": 164
+        },
+        {
+          "stationId": "285071675",
+          "distanceMeters": 545,
+          "durationSeconds": 576
+        },
+        {
+          "stationId": "285071724",
+          "distanceMeters": 875,
+          "durationSeconds": 845
+        },
+        {
+          "stationId": "285071768",
+          "distanceMeters": 689,
+          "durationSeconds": 680
         }
       ],
       "directWalk": {
-        "distanceMeters": 233,
-        "durationSeconds": 218
-      },
-      "directWalkRetrievedAt": "2026-11-11T07:48:02.082137+00:00"
+        "distanceMeters": 137,
+        "durationSeconds": 132
+      }
     },
     "cheonan-shinsegae": {
       "access": [
+        {
+          "stationId": "285000646",
+          "distanceMeters": 774,
+          "durationSeconds": 700
+        },
+        {
+          "stationId": "285000648",
+          "distanceMeters": 571,
+          "durationSeconds": 528
+        },
+        {
+          "stationId": "285000649",
+          "distanceMeters": 614,
+          "durationSeconds": 557
+        },
+        {
+          "stationId": "285000650",
+          "distanceMeters": 586,
+          "durationSeconds": 528
+        },
+        {
+          "stationId": "285000651",
+          "distanceMeters": 863,
+          "durationSeconds": 798
+        },
+        {
+          "stationId": "285000652",
+          "distanceMeters": 900,
+          "durationSeconds": 851
+        },
+        {
+          "stationId": "285000681",
+          "distanceMeters": 991,
+          "durationSeconds": 910
+        },
+        {
+          "stationId": "285000682",
+          "distanceMeters": 943,
+          "durationSeconds": 866
+        },
+        {
+          "stationId": "285000683",
+          "distanceMeters": 612,
+          "durationSeconds": 553
+        },
+        {
+          "stationId": "285000684",
+          "distanceMeters": 605,
+          "durationSeconds": 547
+        },
+        {
+          "stationId": "285000685",
+          "distanceMeters": 610,
+          "durationSeconds": 559
+        },
         {
           "stationId": "285000686",
           "distanceMeters": 514,
           "durationSeconds": 487
         },
         {
-          "stationId": "285010125",
-          "distanceMeters": 578,
-          "durationSeconds": 524
+          "stationId": "285000687",
+          "distanceMeters": 264,
+          "durationSeconds": 283
+        },
+        {
+          "stationId": "285000688",
+          "distanceMeters": 844,
+          "durationSeconds": 831
+        },
+        {
+          "stationId": "285000689",
+          "distanceMeters": 857,
+          "durationSeconds": 860
+        },
+        {
+          "stationId": "285000706",
+          "distanceMeters": 531,
+          "durationSeconds": 491
+        },
+        {
+          "stationId": "285000707",
+          "distanceMeters": 547,
+          "durationSeconds": 484
+        },
+        {
+          "stationId": "285000709",
+          "distanceMeters": 847,
+          "durationSeconds": 811
+        },
+        {
+          "stationId": "285001061",
+          "distanceMeters": 987,
+          "durationSeconds": 931
+        },
+        {
+          "stationId": "285001062",
+          "distanceMeters": 893,
+          "durationSeconds": 873
+        },
+        {
+          "stationId": "285002084",
+          "distanceMeters": 686,
+          "durationSeconds": 615
+        },
+        {
+          "stationId": "285002085",
+          "distanceMeters": 505,
+          "durationSeconds": 469
         },
         {
           "stationId": "285010014",
@@ -749,18 +3291,31 @@
           "durationSeconds": 492
         },
         {
-          "stationId": "285000685",
-          "distanceMeters": 610,
-          "durationSeconds": 559
+          "stationId": "285010125",
+          "distanceMeters": 578,
+          "durationSeconds": 524
+        },
+        {
+          "stationId": "285071675",
+          "distanceMeters": 935,
+          "durationSeconds": 926
+        },
+        {
+          "stationId": "285071724",
+          "distanceMeters": 579,
+          "durationSeconds": 535
+        },
+        {
+          "stationId": "285071768",
+          "distanceMeters": 601,
+          "durationSeconds": 562
         }
       ],
       "directWalk": {
-        "distanceMeters": 610,
-        "durationSeconds": 569
-      },
-      "directWalkRetrievedAt": "2026-11-11T07:48:03.453318+00:00"
+        "distanceMeters": 514,
+        "durationSeconds": 483
+      }
     }
   },
-  "failures": [],
-  "originStationId": "cheonan-stop-285000685"
+  "failures": []
 }

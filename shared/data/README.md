@@ -1,9 +1,11 @@
 # 천안 위치·교통 참조 데이터
 
-- `cheonan-origin.json`: 고정 출발지. 종합터미널, BIS `285000685`, ARS `685`, 위도 `36.8187607`, 경도 `127.1556582`. 같은 이름의 686번은 BIS `285000686`(위도 `36.8190148`, 경도 `127.1565574`)인 별도 정류장이다. 소재 도로는 천안시 동남구 만남로이며 터미널 건물 주소와 구분한다.
+- `cheonan-origin.json`: 고정 출발지. 종합터미널, BIS `285000686`, ARS `686`, 위도 `36.8190148`, 경도 `127.1565574`. 같은 이름의 685번은 BIS `285000685`인 별도 정류장이다. 소재 도로는 천안시 동남구 만남로이며 터미널 건물 주소와 구분한다.
 - `cheonan-places.json`: 기존 17개 시설과 추가 9개 시설. 시설 주소 근거와 좌표 원본 링크를 분리해 저장한다. 좌표는 시설 대표점이며 출입구와 다를 수 있다. 두 터미널은 같은 단지 안의 다른 시설이다.
 - `cheonan-transport.json`: [천안시 교통정보센터](https://its.cheonan.go.kr/bis/route.do)의 공개 응답에서 수집한 333개 방향별 노선, 3,436개 정류장, 정류장 순서, 노선 선형. `retrievedAt`은 수집 시각이다. 원천 갱신 시각·개별 운행일 달력·구간별 시간표는 제공되지 않았다. 필수 정류장 정보가 누락된 3개 노선은 `failedRouteIds`로 기록하고 제외했다.
-- `cheonan-walks.json`: [Valhalla/FOSSGIS](https://valhalla.openstreetmap.de/)의 **pedestrian** 경로 행렬. 각 시설은 1.5km 내 가까운 정류장 후보 최대 4곳에서 보행망 연결(2.5km 이하)을 사용한다. 직접 보행 경로는 685번에서 다시 조회했고 `originStationId`가 일치하는 경우에만 사용한다. 보행시간은 4km/h 설정에 따른 추정치이다. 출발지에서 다른 정류장으로 걷는 경로를 승차 후보에 넣지 않는다.
+- `cheonan-walks.json`: [Valhalla/FOSSGIS](https://valhalla.openstreetmap.de/)의 **pedestrian** 경로 행렬. 시설별로 직선 1km 이내 정류장을 조회하며, 기본 도보 경로가 1km 안에 들지 않으면 거리 기준 최단 도보 경로도 확인한다. 보행망 거리 1km 이하만 하차 후보로 저장한다. 시설 26곳의 직접 보행 경로는 686번 기준으로 조회하며 `originStationId`가 일치하는 경우에 사용한다. 보행시간은 4km/h 설정에 따른 추정치이다. 첫 버스는 686번에서 탑승한다.
+
+이동 경로 선택에는 같은 버스 번호 조합마다 하차 후 도보 거리가 가장 짧은 경로를 하나씩 제공한다. 정렬 기준은 선택된 경로의 표시 순서에 적용한다.
 
 시설 좌표·보행망: **© [OpenStreetMap contributors](https://www.openstreetmap.org/copyright)**, [ODbL](https://opendatacommons.org/licenses/odbl/1-0/). 일부 시장 좌표: [전국전통시장표준데이터](https://www.data.go.kr/data/15012894/standard.do). OSM에 기반한 좌표·보행 데이터는 원본 객체 링크와 함께 제공한다.
 

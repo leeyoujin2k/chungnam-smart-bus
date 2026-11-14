@@ -4,6 +4,8 @@ Only road-routed links are approved. A straight-line proximity test is a bounded
 candidate lookup, not evidence of pedestrian access. No automotive routes used.
 """
 import json
+from itertools import batched
+from hashlib import sha256
 from math import isfinite
 import sys
 import time
@@ -15,26 +17,38 @@ import httpx
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 from backend.services.geo import haversine_meters
+from backend.services.cheonan_routing import MAX_ALIGHT_WALK_METERS
 
 URL = 'https://valhalla1.openstreetmap.de/sources_to_targets'
 CACHE = ROOT / 'backend/.local/cheonan-walk-import'
+MATRIX_BATCH_SIZE = 32
 
 
 def point(coordinates):
     return {'lat': coordinates['latitude'], 'lon': coordinates['longitude']}
 
 
-def matrix(client, key, sources, targets):
+def matrix(client, key, sources, targets, *, shortest=False):
     path = CACHE / (key + '.json')
     if path.exists():
         return json.loads(path.read_text(encoding='utf-8'))
+    pedestrian = {'walking_speed': 4.0}
+    if shortest:
+        pedestrian['shortest'] = True
     response = client.get(URL, params={'json': json.dumps({'sources': sources, 'targets': targets,
-        'costing': 'pedestrian', 'units': 'kilometers', 'costing_options': {'pedestrian': {'walking_speed': 4.0}}})})
+        'costing': 'pedestrian', 'units': 'kilometers', 'costing_options': {'pedestrian': pedestrian}})})
     response.raise_for_status()
     data = response.json()
     path.write_text(json.dumps(data), encoding='utf-8')
     time.sleep(1.1)
     return data
+
+
+def alighting_matrix(client, destination_id, sources, targets, *, shortest=False):
+    coordinates = json.dumps([sources, targets], separators=(',', ':'))
+    revision = sha256(coordinates.encode()).hexdigest()[:16]
+    mode = 'alight-shortest' if shortest else 'alight'
+    return matrix(client, f'{destination_id}-{mode}-{revision}', sources, targets, shortest=shortest)
 
 
 def link(value):
@@ -96,22 +110,39 @@ def main():
             if not coordinates:
                 output['failures'].append(place['destinationId'])
                 continue
-            nearby = sorted((sid for sid, pos in stations.items() if haversine_meters(coordinates, pos) <= 1500),
-                            key=lambda sid: (haversine_meters(coordinates, stations[sid]), sid))[:4]
-            sources = [point(stations[sid]) for sid in nearby]
-            sources.append(point(origin))
+            nearby = sorted(sid for sid, pos in stations.items()
+                            if haversine_meters(coordinates, pos) <= MAX_ALIGHT_WALK_METERS)
+            target = [point(coordinates)]
             try:
-                data = matrix(client, place['destinationId'] + '-all-direct-' + transit['origin']['publicId'], sources, [point(coordinates)])
+                excluded = []
                 walks = []
-                for sid, row in zip(nearby, data['sources_to_targets']):
-                    walk = link(row[0])
-                    if walk and walk['distanceMeters'] <= 2500:
-                        walks.append({'stationId': sid, **walk})
-                output['destinations'][place['destinationId']] = {'access': walks,
-                    'directWalk': link(data['sources_to_targets'][-1][0])}
+                for batch in batched(nearby, MATRIX_BATCH_SIZE):
+                    data = alighting_matrix(client, place['destinationId'],
+                                            [point(stations[sid]) for sid in batch], target)
+                    for sid, row in zip(batch, data['sources_to_targets'], strict=True):
+                        walk = link(row[0])
+                        if walk and walk['distanceMeters'] <= MAX_ALIGHT_WALK_METERS:
+                            walks.append({'stationId': sid, **walk})
+                        else:
+                            excluded.append(sid)
+                # The usual pedestrian route can prefer paths and crossings
+                # that make it longer than the shortest available walking route.
+                for batch in batched(excluded, MATRIX_BATCH_SIZE):
+                    data = alighting_matrix(client, place['destinationId'],
+                                            [point(stations[sid]) for sid in batch], target, shortest=True)
+                    for sid, row in zip(batch, data['sources_to_targets'], strict=True):
+                        walk = link(row[0])
+                        if walk and walk['distanceMeters'] <= MAX_ALIGHT_WALK_METERS:
+                            walks.append({'stationId': sid, **walk, 'pedestrianRouting': 'shortest'})
+                data = matrix(client, place['destinationId'] + '-direct-' + transit['origin']['publicId'],
+                              [point(origin)], target)
+                output['destinations'][place['destinationId']] = {'access': sorted(walks, key=lambda walk: walk['stationId']),
+                    'directWalk': link(data['sources_to_targets'][0][0])}
                 print(place['destinationId'], len(walks), flush=True)
-            except (httpx.HTTPError, KeyError, ValueError):
+            except (httpx.HTTPError, KeyError, ValueError, IndexError):
                 output['failures'].append(place['destinationId'])
+        if output['failures']:
+            raise RuntimeError(f"Walking reference incomplete; existing snapshot preserved: {output['failures']}")
         (ROOT / 'shared/data/cheonan-walks.json').write_text(json.dumps(output, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
         print('Walking reference saved; failures:', output['failures'], flush=True)
 

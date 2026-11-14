@@ -92,7 +92,9 @@ def checked_detail(session, search_id, option_id, state, now, data_mode, expecte
     require_core(state)
     if search.data_mode != data_mode:
         changed()
-    if transport is not None and search.origin_station_id == transport.origin['stationId']:
+    if transport is not None:
+        if search.origin_station_id != transport.origin['stationId']:
+            changed()
         destination = catalog.destination(session, search.destination_id)
         return transport.checked_detail(search, option_id, destination, expected)
     try:

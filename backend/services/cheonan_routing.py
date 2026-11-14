@@ -26,7 +26,8 @@ NOTICE = ('공식 노선 구조 기준 · 현재 운행 여부와 대기·환승
           '이동시간은 천안시가 공개한 노선 전체 평균시간을 구간 거리에 비례해 추정한 값에 도보시간을 더한 값입니다. '
           '거리는 공식 노선 선형과 OSM 보행 경로 기준의 근삿값입니다.')
 SORTS = ('fastest', 'transfers', 'walking', 'distance')
-MAX_OPTIONS = 12
+PREFERRED_TRANSFER_COUNT = 12
+MAX_ALIGHT_WALK_METERS = 1000
 # BIS IDs for the two directions at the kiosk, verified independently of the names.
 OPPOSITE_TERMINAL_SIDE = {'285000685': '285000686', '285000686': '285000685'}
 RETURN_RADIUS_METERS = 180
@@ -154,7 +155,7 @@ class CheonanNetwork:
                 raise ValueError('A published route references an unknown stop')
             for index, sid in enumerate(route['stops']):
                 self.occurrences[sid].append((route['routeId'], index))
-        self.revision = digest(['directed-stops-v5', self.data, self.walks])
+        self.revision = digest(['directed-stops-v9', self.data, self.walks])
         self.retrieved = datetime.fromisoformat(self.data['retrievedAt'])
         self._positions = {}
 
@@ -287,7 +288,7 @@ class CheonanNetwork:
         target = defaultdict(list)
         for access in destination.get('access', []):
             alight_sid = access['stationId']
-            if alight_sid in blocked:
+            if alight_sid in blocked or access['distanceMeters'] > MAX_ALIGHT_WALK_METERS:
                 continue
             if direct_walk and all(direct_walk[key] <= access[key] for key in ('distanceMeters', 'durationSeconds')):
                 continue  # Riding cannot improve a trip whose final walk alone is longer.
@@ -350,8 +351,7 @@ class CheonanNetwork:
                         if metrics['distance'] is not None), default=None)
         if shortest is not None:
             distance_limit = min(distance_limit, max(shortest + 1200, shortest * 1.6))
-        # Apply direction and efficiency checks before ranking or taking a shortlist.
-        best = {mode: {} for mode in SORTS}
+        best_by_bus_numbers = {}
         for path, stop_sequences, metrics, lower_bound in evaluated:
             distance = metrics['distance']
             if (distance if distance is not None else lower_bound) > distance_limit:
@@ -359,28 +359,25 @@ class CheonanNetwork:
             legs, access, _ = path
             if metrics['transfers'] and not worthwhile_transfer(metrics, direct_metrics):
                 continue
-            family = tuple(rid for rid, _, _ in legs)
+            bus_numbers = tuple(self.routes[rid]['name'] for rid, _, _ in legs)
             identity = 'cheonan-option-' + digest([legs, access])
-            for mode in SORTS:
-                key = ranking_key(metrics, mode, identity)
-                if family not in best[mode] or key < best[mode][family][0]:
-                    best[mode][family] = (key, path, stop_sequences)
+            key = ranking_key(metrics, 'walking', identity)
+            if bus_numbers not in best_by_bus_numbers or key < best_by_bus_numbers[bus_numbers][0]:
+                best_by_bus_numbers[bus_numbers] = (key, path, stop_sequences, metrics)
+
         shortlist = {}
-        for ranked in best.values():
-            ordered = sorted(ranked.values(), key=lambda value: value[0])
+        for key, path, stop_sequences, _ in best_by_bus_numbers.values():
+            if len(path[0]) == 1:
+                shortlist[key[-1]] = (path, stop_sequences)
+        for mode in SORTS:
+            ordered = sorted(best_by_bus_numbers.values(), key=lambda row: ranking_key(row[3], mode, row[0][-1]))
             groups = {}
             for row in ordered:
                 groups.setdefault(row[2], []).append(row)
-            # An identical boarding-to-alighting sequence consumes one place
-            # in the shortlist. Keep its bus variants for arrival comparison.
+            # Include transfer choices from the best path groups for each sort.
             for variants in list(groups.values())[:3]:
-                for key, path, stop_sequences in variants:
+                for key, path, stop_sequences, _ in variants:
                     shortlist[key[-1]] = (path, stop_sequences)
-        # A direct line is a useful alternative when the user is waiting at the
-        # kiosk, even if several other lines have similar movement estimates.
-        direct = (value for family, value in best['transfers'].items() if len(family) == 1)
-        for key, path, stop_sequences in sorted(direct, key=lambda value: value[0])[:MAX_OPTIONS]:
-            shortlist[key[-1]] = (path, stop_sequences)
         candidates = []
         for option_id, ((legs, access, transfer), stop_sequences) in shortlist.items():
             segments = []
@@ -406,8 +403,6 @@ class CheonanNetwork:
                 estimatedTravelSeconds=total([p.durationSeconds for p in segments if p.type != 'transfer']),
                 boardStation=buses[0].boardStation, alightStation=buses[-1].alightStation,
                 transferStations=[p.atStation for p in segments if p.type == 'transfer'], dataSource='cheonan-bis-static')
-            # Same buses with a nearby alighting/transfer stop are a single
-            # alternative family; choose its best member for each sort later.
             family = tuple(rid for rid, _, _ in legs)
             candidates.append((family, option, segments))
         return candidates
@@ -419,21 +414,21 @@ class CheonanNetwork:
         all_candidates = self.destination_candidates(destination)
         minima = {mode: min((option_metrics(option)[mode] for _, option, _ in all_candidates
                     if option_metrics(option)[mode] is not None), default=None) for mode in SORTS}
-        groups, families = set(), set()
-        representatives, variants = [], []
-        for family, option, segments in sorted(all_candidates, key=lambda row: sort_key(row[1], request.sort)):
-            if family in families:
+        groups = set()
+        direct, representatives, variants = [], [], []
+        for _, option, segments in sorted(all_candidates, key=lambda row: sort_key(row[1], request.sort)):
+            if option.transferCount == 0:
+                direct.append((option, segments))
                 continue
-            families.add(family)
             if option.pathGroupId in groups:
                 variants.append((option, segments))
             else:
                 groups.add(option.pathGroupId)
                 representatives.append((option, segments))
-        # Give different paths space before adding equivalent bus variants.
-        selected = (representatives + variants)[:MAX_OPTIONS]
+        selected = direct + (representatives + variants)[:PREFERRED_TRANSFER_COUNT]
         values = []
-        for option, segments in sorted(selected, key=lambda row: sort_key(row[0], request.sort)):
+        ordered = sorted(selected, key=lambda row: sort_key(row[0], request.sort))
+        for option, segments in ordered:
             features = {'fastest': '최소 이동시간 · 대기 제외', 'transfers': '최소 환승', 'walking': '최소 도보', 'distance': '최단 이동거리'}
             metrics = option_metrics(option)
             option = option.model_copy(update={'features': [features[mode] for mode in SORTS
@@ -456,6 +451,25 @@ class CheonanNetwork:
             routingNotice=NOTICE, referenceRetrievedAt=self.retrieved)
 
     def checked_detail(self, search, option_id, destination, expected=None):
+        detail = self._saved_detail(search, option_id, expected)
+        options = self.destination_candidates(destination)
+        if not any(option.routeOptionId == option_id and option.routeSnapshotVersion == detail.routeSnapshotVersion
+                   and segments == detail.segments for _, option, segments in options):
+            changed()
+        return detail
+
+    def checked_details(self, search, destination):
+        candidates = {option.routeOptionId: (option.routeSnapshotVersion, segments)
+                      for _, option, segments in self.destination_candidates(destination)} if search.snapshot else {}
+        details = []
+        for option_id in search.snapshot:
+            detail = self._saved_detail(search, option_id)
+            if candidates.get(option_id) != (detail.routeSnapshotVersion, detail.segments):
+                changed()
+            details.append(detail)
+        return details
+
+    def _saved_detail(self, search, option_id, expected=None):
         saved = search.snapshot.get(option_id)
         if saved is None:
             not_found()
@@ -471,10 +485,4 @@ class CheonanNetwork:
                 detail.originStationId != search.origin_station_id or detail.destinationId != search.destination_id or
                 detail.computedAt.timestamp() != search.created_at):
             unavailable()
-        # Rebuild from the current source, rather than trust a saved checksum as
-        # proof that a bus/boarding occurrence really exists.
-        options = self.destination_candidates(destination)
-        if not any(option.routeOptionId == option_id and option.routeSnapshotVersion == detail.routeSnapshotVersion
-                   and segments == detail.segments for _, option, segments in options):
-            changed()
         return detail

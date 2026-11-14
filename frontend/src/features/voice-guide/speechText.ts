@@ -36,7 +36,8 @@ export function routeSpeech(detail: RouteDetail) {
   return detail.segments.map(segment => {
     if (segment.type === 'bus') {
       const sameName = segment.boardStation.name === segment.alightStation.name
-      const board = stopName(segment.boardStation.name, sameName ? segment.boardStation.arsId : null)
+      const firstBoarding = segment.boardStation.stationId === detail.originStationId
+      const board = stopName(segment.boardStation.name, firstBoarding || sameName ? segment.boardStation.arsId : null)
       const alight = stopName(segment.alightStation.name, sameName ? segment.alightStation.arsId : null)
       const bus = pronounceRouteName(formatBusLabel(segment.routeName))
       return `${board}에서 ${bus}를 타세요. ${segment.stopCount}개 정류장을 이동한 뒤 ${alight}에서 내리시면 됩니다.`

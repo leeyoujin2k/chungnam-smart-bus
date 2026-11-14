@@ -16,9 +16,9 @@ from backend.services.cheonan_routing import CheonanNetwork, sort_key
 from backend.services.geo import haversine_meters
 from backend.services.places import load_places
 
-ORIGIN = 'cheonan-stop-285000685'
-OPPOSITE = 'cheonan-stop-285000686'
-ORIGIN_COORDINATES = {'latitude': 36.8187607, 'longitude': 127.1556582}
+ORIGIN = 'cheonan-stop-285000686'
+OPPOSITE = 'cheonan-stop-285000685'
+ORIGIN_COORDINATES = {'latitude': 36.8190148, 'longitude': 127.1565574}
 
 
 @pytest.fixture(scope='module')
@@ -43,12 +43,12 @@ def test_origin_and_distance_are_actual_reference_data(real_service):
     assert response.json()['meta']['dataMode'] == 'static'
     origin = response.json()['data']['station']
     assert origin['name'] == '종합터미널'
-    assert origin['arsId'] == '685'
+    assert origin['arsId'] == '686'
     assert origin['coordinates'] == ORIGIN_COORDINATES
     opposite = client.get('/api/v1/stations/' + OPPOSITE).json()['data']['station']
     assert opposite['name'] == origin['name']
-    assert opposite['stationId'] != origin['stationId'] and opposite['arsId'] == '686'
-    assert opposite['coordinates'] == {'latitude': 36.8190148, 'longitude': 127.1565574}
+    assert opposite['stationId'] != origin['stationId'] and opposite['arsId'] == '685'
+    assert opposite['coordinates'] == {'latitude': 36.8187607, 'longitude': 127.1556582}
     assert len(app.state.transport.routes) == 333
     assert haversine_meters({'latitude':0,'longitude':0}, {'latitude':0,'longitude':1}) == pytest.approx(111195.080, abs=.01)
     assert haversine_meters(origin['coordinates'], origin['coordinates']) == 0
@@ -80,10 +80,11 @@ def test_real_catalog_rejects_every_other_origin_even_for_ai(real_service, wrong
                                                    'departAt': clock[0].isoformat()}),
         client.get('/api/v1/destinations', params=base),
         client.post('/api/v1/destination-interpretations', json={**base, 'text': '단국대병원'}),
+        client.post('/api/v1/conversation/understand', json={**base, 'text': '단국대병원'}),
     ):
         assert response.status_code == 400
         assert response.json()['error']['code'] == 'INVALID_REQUEST'
-        assert '685번' in response.json()['error']['message']
+        assert '686번' in response.json()['error']['message']
 
 
 @pytest.mark.parametrize('kind', [None,'hospital','office','market','shopping','terminal','station','education','culture'])
@@ -100,16 +101,17 @@ def test_partial_search_and_every_category_sort_by_distance(real_service, kind):
     assert found[0]['destinationId'] == 'cheonan-koreatech'
 
 
-def test_all_places_have_real_directed_paths_and_no_synthetic_edges(real_service):
+@pytest.mark.parametrize('mode', ['transfers', 'walking', 'distance', 'fastest'])
+def test_all_places_have_real_directed_paths_and_no_synthetic_edges(real_service, mode):
     app, client, clock = real_service
     network = app.state.transport
     counts = {}
     has_transfer = False
     for place in load_places():
-        found = search(client, clock, place['destinationId'])
+        found = search(client, clock, place['destinationId'], mode)
         assert found['originStationId'] == ORIGIN
         counts[place['destinationId']] = len(found['routeOptions'])
-        families = set()
+        bus_sequences = set()
         for option in found['routeOptions']:
             assert option['totalDurationSeconds'] is None and option['waitingDurationSeconds'] is None
             assert option['routeNames'] and option['boardStation']['stationId'] == ORIGIN
@@ -119,11 +121,12 @@ def test_all_places_have_real_directed_paths_and_no_synthetic_edges(real_service
             detail = response.json()['data']
             assert detail['segments'][0]['type'] == 'bus'
             assert detail['segments'][0]['boardStation']['stationId'] == ORIGIN
+            assert 0 <= option['walkingDistanceMeters'] == detail['walkingDistanceMeters'] <= 1000
             assert [p['segmentId'] for p in detail['segments'] if p['type'] == 'walk'] == ['destination-walk']
             buses = [p for p in detail['segments'] if p['type']=='bus']
-            family = tuple(bus['routeId'] for bus in buses)
-            assert family not in families
-            families.add(family)
+            bus_sequence = tuple(bus['routeName'] for bus in buses)
+            assert bus_sequence not in bus_sequences
+            bus_sequences.add(bus_sequence)
             for bus in buses:
                 route = network.routes[bus['routeId'].removeprefix('cheonan-route-')]
                 start, end = bus['boardSequence'], bus['alightSequence']
@@ -144,34 +147,77 @@ def test_all_places_have_real_directed_paths_and_no_synthetic_edges(real_service
                 assert buses[0]['alightStation'] == transfer['atStation'] == buses[1]['boardStation']
                 assert transfer['fromSegmentId'] == buses[0]['segmentId']
                 assert transfer['toSegmentId'] == buses[1]['segmentId']
-    assert has_transfer and counts['cheonan-dankook-hospital'] and counts['cheonan-city-hall']
+    assert has_transfer and counts['cheonan-soonchunhyang-hospital'] and counts['cheonan-city-hall']
 
 
-def test_hospital_uses_the_seven_verified_directions_and_real_distance(real_service):
+def test_final_walk_includes_exactly_one_kilometer_and_excludes_longer_walks(real_service):
+    app, _, _ = real_service
+    network = app.state.transport
+    destination = next(row for row in load_places() if row['destinationId'] == 'cheonan-central-market')
+    point = destination['coordinates']
+    for meters, expected in ((1000, True), (1001, False)):
+        walks = {'destinations': {destination['destinationId']: {'access': [
+            {'stationId': '285000665', 'distanceMeters': meters, 'durationSeconds': 900},
+        ]}}}
+        trial_network = CheonanNetwork(source=network.data, walks=walks)
+        candidates = trial_network.candidates(destination['destinationId'], destination['name'],
+                                              point['latitude'], point['longitude'])
+        assert bool(candidates) == expected
+        assert all(option.walkingDistanceMeters == meters and segments[0].boardStation.stationId == ORIGIN
+                   for _, option, segments in candidates)
+
+
+def test_pension_office_keeps_distinct_buses_with_their_shortest_walk(real_service):
+    _, client, clock = real_service
+    found = search(client, clock, 'cheonan-national-pension-office')
+    options = found['routeOptions']
+    assert len(options) > 12
+    assert {'720', '390', '701'} <= {option['routeNames'][0] for option in options
+        if option['transferCount'] == 0 and option['alightStation']['arsId'] == '1950'
+        and option['boardStation']['stationId'] == ORIGIN and option['walkingDistanceMeters'] == 891}
+    assert not any(option['alightStation']['arsId'] == '777' for option in options)
+
+
+def test_old_685_search_is_rejected_before_detail_arrival_and_print(real_service):
     app, client, clock = real_service
-    found = search(client, clock, 'cheonan-dankook-hospital', 'fastest')
-    # Published directional route IDs and their stop order at 685 (not just
-    # the public bus number). E.g. the other 13 passes hospital before 686.
-    expected = {'13': ('285000011', '1715', 5), '20': ('285000017', '1715', 5),
-                '192': ('285000399', '1715', 5), '121': ('285000081', '639', 6),
-                '200': ('285000104', '639', 6), '201': ('285000106', '639', 6),
-                '221': ('285000108', '639', 5)}
-    assert {tuple(o['routeNames']) for o in found['routeOptions']} == {(bus,) for bus in expected}
+    found = search(client, clock, 'cheonan-central-market')
+    option = found['routeOptions'][0]
+    search_id, option_id = found['routeSearchId'], option['routeOptionId']
+    with app.state.database.session() as db:
+        if db.get(Station, OPPOSITE) is None:
+            db.add(Station(station_id=OPPOSITE, name='종합터미널', direction_label='정류장 685'))
+            db.flush()
+        db.get(RouteSearch, search_id).origin_station_id = OPPOSITE
+
+    base = f'/api/v1/route-searches/{search_id}'
+    path = f'{base}/options/{option_id}'
+    selected = {'routeSearchId': search_id, 'routeOptionId': option_id,
+                'expectedRouteSnapshotVersion': option['routeSnapshotVersion']}
+    for result in (client.get(path), client.get(f'{path}/live'), client.get(f'{base}/arrivals'),
+                   client.post('/api/v1/easy-guidance', json=selected),
+                   client.post('/api/v1/print-guides', json=selected)):
+        assert result.status_code == 409, result.text
+        assert result.json()['error']['code'] == 'ROUTE_VERSION_CHANGED'
+
+
+def test_hospital_uses_the_verified_686_direction_and_real_distance(real_service):
+    app, client, clock = real_service
+    found = search(client, clock, 'cheonan-soonchunhyang-hospital', 'fastest')
+    direct = [option for option in found['routeOptions']
+              if option['routeNames'] == ['9'] and option['alightStation']['arsId'] == '899']
+    assert len(direct) == 1
     reverse = app.state.transport.routes['285000010']['stops']
     assert reverse.index('285000640') < reverse.index('285000686') and '285000685' not in reverse
-    for option in found['routeOptions']:
+    assert not search(client, clock, 'cheonan-dankook-hospital')['routeOptions']
+    for option in direct:
         path = f"/api/v1/route-searches/{found['routeSearchId']}/options/{option['routeOptionId']}"
         detail = client.get(path).json()['data']
         bus, walk = detail['segments']
-        route_id, alight, count = expected[bus['routeName']]
+        route_id = '285000331'
         assert bus['routeId'] == 'cheonan-route-' + route_id
-        assert bus['boardStation']['arsId'] == '685' and bus['alightStation']['arsId'] == alight
-        if bus['routeName'] in {'13', '20', '192'}:
-            assert bus['directionLabel'] == '단국대학교병원 방면'
+        assert bus['boardStation']['arsId'] == '686' and bus['alightStation']['arsId'] == '899'
         assert all(stop['stationId'] != OPPOSITE for stop in bus['stops'])
-        assert bus['stopCount'] == count and bus['path']
-        assert bus['stops'][1]['stationId'] == 'cheonan-stop-285000706'
-        assert bus['stops'][-2]['stationId'] == 'cheonan-stop-285001595'
+        assert bus['stopCount'] == 8 and bus['path']
         def length(line):
             return sum(haversine_meters(a, b) for a, b in zip(line, line[1:]))
         assert bus['distanceMeters'] == round(length(bus['path']))
@@ -181,7 +227,9 @@ def test_hospital_uses_the_seven_verified_directions_and_real_distance(real_serv
         assert detail['estimatedTravelSeconds'] == option['estimatedTravelSeconds'] == bus['durationSeconds'] + walk['durationSeconds']
 
 
-@pytest.mark.parametrize(('mode', 'field'), [('transfers', 'transferCount'), ('distance', 'totalDistanceMeters')])
+@pytest.mark.parametrize(('mode', 'field'), [
+    ('transfers', 'transferCount'), ('distance', 'totalDistanceMeters'),
+])
 def test_medical_center_forward_trips_share_one_path_group(real_service, mode, field):
     _, client, clock = real_service
     found = search(client, clock, 'cheonan-medical-center', mode)
@@ -189,10 +237,9 @@ def test_medical_center_forward_trips_share_one_path_group(real_service, mode, f
     values = [option[field] for option in options]
     assert values == sorted(values, key=lambda value: (value is None, value))
     assert len({option['routeOptionId'] for option in options}) == len(options)
-    shared = [option for option in options if option['routeNames'] in (['982', '500'], ['982', '512'])
-              and option['alightStation']['arsId'] == '743'
-              and [stop['arsId'] for stop in option['transferStations']] == ['649']]
-    assert {tuple(option['routeNames']) for option in shared} == {('982', '500'), ('982', '512')}
+    shared = [option for option in options if option['routeNames'] in (['500'], ['512'])
+              and option['alightStation']['arsId'] == '743' and not option['transferStations']]
+    assert {tuple(option['routeNames']) for option in shared} == {('500',), ('512',)}
     assert len({option['pathGroupId'] for option in shared}) == 1
     assert len({option['pathGroupId'] for option in options}) > 1
     for option in shared:
@@ -204,18 +251,34 @@ def test_medical_center_forward_trips_share_one_path_group(real_service, mode, f
         assert [leg['routeName'] for leg in detail['segments'] if leg['type'] == 'bus'] == option['routeNames']
 
 
-def test_removes_terminal_loop_and_medical_center_reverse_transfer_in_every_sort(real_service):
+@pytest.mark.parametrize(('destination', 'bus', 'stop', 'distance'), [
+    ('cheonan-central-market', '500', '664', 190),
+    ('cheonan-chungmu-hospital', '900', '828', 313),
+])
+def test_each_bus_keeps_its_shortest_walk_for_every_sort(real_service, destination, bus, stop, distance):
+    _, client, clock = real_service
+    for mode in ('transfers', 'walking', 'distance', 'fastest'):
+        result = search(client, clock, destination, mode)
+        options = [option for option in result['routeOptions'] if option['routeNames'] == [bus]]
+        assert len(options) == 1
+        option = options[0]
+        assert option['walkingDistanceMeters'] == distance
+        assert option['boardStation']['stationId'] == ORIGIN
+        detail = client.get(f"/api/v1/route-searches/{result['routeSearchId']}/options/{option['routeOptionId']}")
+        assert detail.status_code == 200
+        assert detail.json()['data']['segments'][0]['alightStation']['arsId'] == stop
+
+
+def test_removes_opposite_side_and_terminal_loops_in_every_sort(real_service):
     _, client, clock = real_service
     for mode in ('transfers', 'distance', 'fastest', 'walking'):
-        # The 72 → 72 round trip in the screenshot leaves 685 and returns to 686.
         assert not search(client, clock, 'cheonan-bus-terminal', mode)['routeOptions']
-        # The 24 → 24 detour returns through 686 before continuing to the hospital.
+        assert not search(client, clock, 'cheonan-express-terminal', mode)['routeOptions']
         medical = search(client, clock, 'cheonan-medical-center', mode)['routeOptions']
-        assert ['24', '24'] not in [o['routeNames'] for o in medical]
-        assert any(o['routeNames'] == ['982', '500'] and o['transferStations'][0]['arsId'] == '649' for o in medical)
-        # These routes do not need the opposite terminal stop to be a detour.
+        assert any(o['routeNames'] == ['500'] for o in medical)
+        assert not any(o['routeNames'][0] == '982' for o in medical)
         chungmu = search(client, clock, 'cheonan-chungmu-hospital', mode)['routeOptions']
-        assert any(o['routeNames'] == ['982', '10'] for o in chungmu)
+        assert any(o['routeNames'] == ['10'] for o in chungmu)
         assert not any(o['routeNames'][0] in {'72', '121'} for o in chungmu)
 
 
@@ -224,10 +287,11 @@ def test_direct_ride_wins_over_transfer_with_negligible_distance_gain(real_servi
     options = search(client, clock, 'cheonan-station', 'distance')['routeOptions']
     assert options
     assert all(o['transferCount'] == 0 for o in options)
-    assert options[0]['routeNames'] == ['982']
-    campus = search(client, clock, 'cheonan-dankook-university')['routeOptions']
-    assert campus[0]['transferCount'] == 0
-    assert any(o['transferCount'] == 1 and o['walkingDistanceMeters'] < campus[0]['walkingDistanceMeters'] for o in campus)
+    known_distances = [o['totalDistanceMeters'] for o in options if o['totalDistanceMeters'] is not None]
+    assert options[0]['totalDistanceMeters'] == min(known_distances)
+    market = search(client, clock, 'cheonan-byeongcheon-market')['routeOptions']
+    assert market[0]['transferCount'] == 0
+    assert any(o['routeNames'][0] in {'400', '402'} and o['transferCount'] == 0 for o in market)
 
 
 def test_opposite_side_of_traveled_corridor_is_a_reverse_transfer():
@@ -288,7 +352,7 @@ def test_four_real_metrics_change_order_and_preserve_detail_ai_and_print(real_se
     _, client, clock = real_service
     orders = []
     for mode in ['fastest','transfers','walking','distance']:
-        found = search(client, clock, 'cheonan-dankook-hospital', mode)
+        found = search(client, clock, 'cheonan-central-market', mode)
         options = [s.RouteOption.model_validate(o) for o in found['routeOptions']]
         assert options == sorted(options, key=lambda o:sort_key(o,mode))
         orders.append([o.routeOptionId for o in options])
@@ -305,7 +369,7 @@ def test_four_real_metrics_change_order_and_preserve_detail_ai_and_print(real_se
         shown = client.get(path).json()['data']
         assert printed.json()['data']['routeDetail'] == shown
         voice = guidance.json()['data']['steps'][0]['text']
-        assert '종합터미널 685번' in voice
+        assert '종합터미널 686번' in voice
         assert shown['segments'][0]['directionLabel'] in voice
         assert f"약 {(first.estimatedTravelSeconds + 59) // 60}분" in voice
         assert printed_segments[0]['type'] == 'bus' and printed_segments[0]['boardStation']['stationId'] == ORIGIN
@@ -319,7 +383,7 @@ def test_ranked_metrics_and_tied_features_are_independently_consistent(real_serv
     fields = {'fastest': 'estimatedTravelSeconds', 'transfers': 'transferCount',
               'walking': 'walkingDistanceMeters', 'distance': 'totalDistanceMeters'}
     for mode, field in fields.items():
-        options = search(client, clock, 'cheonan-dankook-hospital', mode)['routeOptions']
+        options = search(client, clock, 'cheonan-city-hall', mode)['routeOptions']
         values = [option[field] for option in options]
         assert values == sorted(values, key=lambda value: (value is None, value or 0))
         # The minimum can be one when the fixed stop has no direct bus.
@@ -347,7 +411,7 @@ def test_expiry_and_changed_snapshot_still_block_guidance(real_service):
 
 def test_card_arrivals_cover_every_bus_and_share_stop_queries(real_service, monkeypatch):
     _, client, clock = real_service
-    found = search(client, clock, 'cheonan-seobuk-district-office')
+    found = search(client, clock, 'cheonan-city-hall')
     base = f"/api/v1/route-searches/{found['routeSearchId']}"
     buses_by_option = {}
     for option in found['routeOptions']:
@@ -358,6 +422,7 @@ def test_card_arrivals_cover_every_bus_and_share_stop_queries(real_service, monk
     buses = [bus for legs in buses_by_option.values() for bus in legs]
     target = buses[0]
     target_stop = target['boardStation']['stationId'].removeprefix('cheonan-stop-')
+    assert target_stop == '285000686'
     target_route = target['routeId'].removeprefix('cheonan-route-')
     all_stops = {bus['boardStation']['stationId'].removeprefix('cheonan-stop-') for bus in buses}
     assert len(all_stops) < len(buses)
@@ -381,6 +446,7 @@ def test_card_arrivals_cover_every_bus_and_share_stop_queries(real_service, monk
     assert data['routeSearchId'] == found['routeSearchId']
     assert set(data['options']) == set(buses_by_option)
     assert sorted(queried) == sorted(all_stops)
+    assert '285000685' not in queried
     for option in found['routeOptions']:
         option_id = option['routeOptionId']
         result = data['options'][option_id]
@@ -406,7 +472,7 @@ async def test_arrivals_use_only_official_matching_route_and_do_not_forge_source
         originStationId=ORIGIN,destinationId='destination',computedAt=now,journeyStatus='ready',
         referenceDataQuality=s.Quality(sourceId=None,sourceUpdatedAt=None,fetchedAt=None,freshness='unknown'),segments=[bus])
     def handler(request):
-        assert request.url.params['stopId']=='285000685'
+        assert request.url.params['stopId']=='285000686'
         return httpx.Response(200,json={'resultList':[{'ROUTE_ID':285000007,'RTIME':3}, {'ROUTE_ID':285000007,'RTIME':-1}, {'ROUTE_ID':1,'RTIME':1}]})
     async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
         state = await arrival_state(detail,now,client=client)

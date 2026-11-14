@@ -1,11 +1,12 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query, Request
+from starlette.concurrency import run_in_threadpool
 
 from backend.models import schemas as s
 from backend.integrations.providers import read_provider
 from backend.integrations.cheonan_live import arrival_state, arrival_state_many
-from backend.api.errors import changed, unavailable
+from backend.api.errors import changed
 from backend.services import ai, catalog, journeys
 
 router = APIRouter(prefix='/api/v1', responses={status: {'model': s.Envelope[None]} for status in (400,404,409,410,503,500)})
@@ -83,10 +84,8 @@ async def search_arrivals(routeSearchId: s.Identifier, request: Request, db: Ses
     journeys.require_core(provider)
     if search.data_mode != data_mode or search.origin_station_id != transport.origin['stationId']:
         changed()
-    if len(search.snapshot) > 12:
-        unavailable()
-    details = [journeys.checked_detail(db, routeSearchId, option_id, provider, now, data_mode,
-        transport=transport) for option_id in search.snapshot]
+    destination = catalog.destination(db, search.destination_id)
+    details = await run_in_threadpool(transport.checked_details, search, destination)
     arrivals = await arrival_state_many(details, now)
     return response(request, s.SearchArrivals(routeSearchId=routeSearchId, options={
         detail.routeOptionId: s.OptionArrivals(routeSnapshotVersion=detail.routeSnapshotVersion,

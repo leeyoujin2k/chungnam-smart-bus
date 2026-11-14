@@ -218,3 +218,15 @@ em { font-style:normal; color:var(--accent); }
 .high .routeTimes > span { color:var(--sub); }
 .high .refreshIcon img { filter:brightness(0) invert(1); }
 .high .comparisonCard .cardIcon img { filter:brightness(0); }
+
+.routeLineWithChoices { flex-wrap:nowrap; align-items:flex-start; }
+.routeLineWithChoices .routeKind { margin-block-start:max(2px, .65cqw); }
+.groupedBusChoices { display:flex; flex-wrap:wrap; gap:max(3px, .85cqw); min-width:0; }
+.groupedBusChoice { max-width:100%; min-height:max(26px, 6.1cqw); padding:0 max(5px, 1.2cqw); border:1px solid var(--accent); border-radius:.926cqw; background:var(--surface); color:var(--selected-bg); font-size:max(12px, 3.15cqw); font-weight:600; overflow-wrap:anywhere; }
+.groupedBusChoice[aria-pressed=true] { background:var(--selected-bg); color:var(--selected-text); border-color:var(--selected-bg); }
+.groupedBusChoice:hover:not(:disabled) { box-shadow:inset 0 0 0 1px currentColor; }
+.groupedRouteAction { border:0; padding:0; min-height:max(26px, 6.1cqw); background:none; }
+.groupedRouteAction:hover:not(:disabled) { text-decoration:underline; }
+.high .groupedBusChoice { border-color:#262626; background:var(--selected-bg); color:var(--selected-text); }
+.high .groupedBusChoice[aria-pressed=true] { background:#262626; color:var(--selected-bg); }
+.groupedBusChoice:disabled, .groupedRouteAction:disabled { opacity:.55; }
