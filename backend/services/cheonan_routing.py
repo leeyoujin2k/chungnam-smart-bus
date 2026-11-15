@@ -1,0 +1,488 @@
+"""Directed alternatives over published Cheonan BIS stop sequences.
+
+Bus edges are never inferred from proximity. Transfers use the exact same BIS
+stop ID; the only walking edges are imported pedestrian-network results.
+"""
+from bisect import bisect_right
+from collections import defaultdict
+from datetime import datetime, timedelta
+from functools import lru_cache
+import json
+from math import cos, radians
+from pathlib import Path
+from uuid import uuid4
+
+from pydantic import ValidationError
+
+from backend.api.errors import ServiceError, changed, not_found, unavailable
+from backend.models import schemas as s
+from backend.models.tables import RouteSearch, Station
+from backend.services.geo import haversine_meters
+from backend.services.routing import digest
+from backend.services.time import quality
+
+DATA = Path(__file__).resolve().parents[2] / 'shared/data'
+NOTICE = ('공식 노선 구조 기준 · 현재 운행 여부와 대기·환승 대기시간은 확인되지 않았습니다. '
+          '이동시간은 천안시가 공개한 노선 전체 평균시간을 구간 거리에 비례해 추정한 값에 도보시간을 더한 값입니다. '
+          '거리는 공식 노선 선형과 OSM 보행 경로 기준의 근삿값입니다.')
+SORTS = ('fastest', 'transfers', 'walking', 'distance')
+PREFERRED_TRANSFER_COUNT = 12
+MAX_ALIGHT_WALK_METERS = 1000
+# BIS IDs for the two directions at the kiosk, verified independently of the names.
+OPPOSITE_TERMINAL_SIDE = {'285000685': '285000686', '285000686': '285000685'}
+RETURN_RADIUS_METERS = 180
+DEPARTURE_RADIUS_METERS = 450
+CORRIDOR_RADIUS_METERS = 110
+
+
+def total(values):
+    return sum(values) if values and all(v is not None for v in values) else None
+
+
+def positions(route, stations):
+    """Monotone map matching retains repeated stops and directed loops."""
+    geometry = route['geometry']
+    if len(geometry) < 2:
+        return None
+    reference_lat = radians(geometry[0][0])
+    points = [(radians(lon) * 6371008.8 * cos(reference_lat), radians(lat) * 6371008.8) for lat, lon in geometry]
+    offsets = [0.0]
+    for a, b in zip(geometry, geometry[1:]):
+        offsets.append(offsets[-1] + haversine_meters({'latitude':a[0], 'longitude':a[1]}, {'latitude':b[0], 'longitude':b[1]}))
+    previous, parents, candidates = None, [], []
+    for sid in route['stops']:
+        stop = stations[sid]
+        px, py = radians(stop['longitude']) * 6371008.8 * cos(reference_lat), radians(stop['latitude']) * 6371008.8
+        choices = []
+        for index, ((ax, ay), (bx, by)) in enumerate(zip(points, points[1:])):
+            dx, dy = bx - ax, by - ay
+            fraction = min(1, max(0, ((px-ax)*dx + (py-ay)*dy) / (dx*dx+dy*dy))) if dx or dy else 0
+            error = (px-ax-fraction*dx)**2 + (py-ay-fraction*dy)**2
+            choices.append((offsets[index] + fraction * (offsets[index+1]-offsets[index]), error))
+        current, links = [], []
+        best, best_index, cursor = float('inf'), -1, 0
+        for j, (along, error) in enumerate(choices):
+            if previous is None:
+                current.append(error)
+                links.append(-1)
+                continue
+            while cursor < len(previous) and candidates[-1][cursor][0] <= along + .001:
+                if previous[cursor] < best:
+                    best, best_index = previous[cursor], cursor
+                cursor += 1
+            current.append(best + error)
+            links.append(best_index)
+        previous = current
+        parents.append(links)
+        candidates.append(choices)
+    end = min(range(len(previous)), key=previous.__getitem__)
+    matched = []
+    for i in range(len(candidates)-1, -1, -1):
+        if end < 0 or candidates[i][end][1] > 150**2:
+            return None
+        matched.append(candidates[i][end][0])
+        end = parents[i][end]
+    return list(reversed(matched)), offsets
+
+
+def clip_path(geometry, offsets, start, end):
+    """Keep the official geometry only between the two matched occurrences."""
+    if start >= end:
+        return []
+
+    def point(offset):
+        i = min(bisect_right(offsets, offset) - 1, len(offsets) - 2)
+        span = offsets[i+1] - offsets[i]
+        fraction = (offset - offsets[i]) / span if span else 0
+        return [a + fraction * (b - a) for a, b in zip(geometry[i], geometry[i+1])]
+
+    points = [point(start), *(geometry[i] for i in range(bisect_right(offsets, start), bisect_right(offsets, end))
+                             if offsets[i] < end), point(end)]
+    return [s.Coordinates(latitude=lat, longitude=lon) for lat, lon in points]
+
+
+def ranking_key(metrics, mode, identity):
+    """Use the same deterministic order before and after candidate pruning."""
+    metric, walking, travel, distance = (metrics[k] for k in (mode, 'walking', 'fastest', 'distance'))
+    time_key, distance_key = (travel is None, travel or 0), (distance is None, distance or 0)
+    prefer_distance = mode == 'walking' or (mode == 'transfers' and metrics['transfers'] > 0)
+    tie_break = (distance_key, time_key) if prefer_distance else (time_key, distance_key)
+    return (metric is None, metric or 0, metrics['transfers'], *tie_break,
+            walking is None, walking or 0, identity)
+
+
+def option_metrics(option):
+    return {'fastest': option.estimatedTravelSeconds, 'transfers': option.transferCount,
+            'walking': option.walkingDistanceMeters, 'distance': option.totalDistanceMeters}
+
+
+def sort_key(option, mode):
+    return ranking_key(option_metrics(option), mode, option.routeOptionId)
+
+
+def substantially_less(value, baseline, *, minimum):
+    return value is not None and baseline is not None and baseline - value >= max(minimum, baseline * .15)
+
+
+def worthwhile_transfer(metrics, direct):
+    """Require a meaningful gain against every available direct alternative."""
+    return all(
+        substantially_less(metrics['distance'], ride['distance'], minimum=400)
+        or substantially_less(metrics['fastest'], ride['fastest'], minimum=180)
+        or substantially_less(metrics['walking'], ride['walking'], minimum=200)
+        for ride in direct
+    )
+
+
+class CheonanNetwork:
+    def __init__(self, source=None, walks=None):
+        self.data = source or json.loads((DATA / 'cheonan-transport.json').read_text(encoding='utf-8'))
+        self.walks = walks if walks is not None else json.loads((DATA / 'cheonan-walks.json').read_text(encoding='utf-8'))
+        self.origin = (json.loads((DATA / 'cheonan-origin.json').read_text(encoding='utf-8'))
+                       if source is None else self.data['origin'])
+        if self.origin != self.data['origin']:
+            raise ValueError('Kiosk origin does not match the official transport snapshot')
+        self.stations = self.data['stations']
+        self.routes = {r['routeId']: r for r in self.data['routes']}
+        origin_row = self.stations[self.origin['publicId']]
+        if (self.origin['stationId'] != 'cheonan-stop-' + self.origin['publicId']
+                or (self.origin['arsId'], self.origin['name']) != (origin_row['arsId'], origin_row['name'])
+                or self.origin['coordinates'] != self.coordinates(self.origin['publicId'])):
+            raise ValueError('Kiosk origin does not match the official stop ID and coordinates')
+        self.occurrences = defaultdict(list)
+        for route in self.routes.values():
+            if any(sid not in self.stations for sid in route['stops']):
+                raise ValueError('A published route references an unknown stop')
+            for index, sid in enumerate(route['stops']):
+                self.occurrences[sid].append((route['routeId'], index))
+        self.revision = digest(['directed-stops-v9', self.data, self.walks])
+        self.retrieved = datetime.fromisoformat(self.data['retrievedAt'])
+        self._positions = {}
+
+    def register_origin(self, database):
+        with database.session() as session:
+            station = session.get(Station, self.origin['stationId'])
+            if station is None:
+                station = Station(station_id=self.origin['stationId'])
+                session.add(station)
+            # A reused database must not leave the UI/distance origin at old or
+            # manually edited coordinates while this graph uses the fixed stop.
+            station.name = self.origin['name']
+            station.direction_label = '정류장 ' + self.origin['arsId']
+            station.region = '충청남도 천안시'
+            station.coordinates = dict(self.origin['coordinates'])
+
+    def coordinates(self, sid):
+        row = self.stations[sid]
+        return {'latitude': row['latitude'], 'longitude': row['longitude']}
+
+    def ref(self, sid):
+        row = self.stations[sid]
+        return s.StationRef(stationId='cheonan-stop-' + sid, name=row['name'], arsId=row.get('arsId') or None)
+
+    def station(self, station_id):
+        sid = station_id.removeprefix('cheonan-stop-')
+        if sid == station_id or sid not in self.stations:
+            not_found()
+        ref = self.ref(sid)
+        return s.Station(**ref.model_dump(), directionLabel=f'정류장 {ref.arsId}' if ref.arsId else '방향 미확인',
+            region='충청남도 천안시' if sid == self.origin['publicId'] else None, coordinates=self.coordinates(sid))
+
+    def require_origin(self, station_id):
+        if station_id != self.origin['stationId']:
+            raise ServiceError(400, 'INVALID_REQUEST',
+                f"이 키오스크는 {self.origin['name']} {self.origin['arsId']}번 정류장에서만 출발합니다.")
+
+    def direct_walk(self, destination_id):
+        if self.walks.get('originStationId') == self.origin['stationId']:
+            return self.walks['destinations'].get(destination_id, {}).get('directWalk')
+        return None
+
+    @lru_cache(maxsize=65536)
+    def stop_distance(self, first, second):
+        return haversine_meters(self.stations[first], self.stations[second])
+
+    def retraces_transfer(self, first, second):
+        transfer = first[-1]
+        # Re-entering the traveled corridor far behind the transfer is a
+        # reversal even if the opposite sidewalk has entirely different IDs.
+        earlier = [sid for sid in first[:-1] if self.stop_distance(sid, transfer) >= DEPARTURE_RADIUS_METERS]
+        return any(self.stop_distance(before, after) <= CORRIDOR_RADIUS_METERS
+                   for after in second[1:] for before in earlier)
+
+    def makes_forward_progress(self, sequences, distance_to_goal, allowance):
+        origin = sequences[0][0]
+        start_distance = closest = distance_to_goal(origin)
+        left_origin = False
+        for sequence in sequences:
+            for sid in sequence[1:]:
+                remaining = distance_to_goal(sid)
+                from_origin = self.stop_distance(origin, sid)
+                if remaining - closest > allowance or (left_origin and from_origin <= RETURN_RADIUS_METERS):
+                    return False
+                closest = min(closest, remaining)
+                left_origin |= from_origin >= DEPARTURE_RADIUS_METERS
+        if distance_to_goal(sequences[-1][-1]) >= start_distance:
+            return False
+        return len(sequences) == 1 or not self.retraces_transfer(*sequences)
+
+    @lru_cache(maxsize=32768)
+    def bus(self, route_id, board, alight, identity):
+        route = self.routes[route_id]
+        if route_id not in self._positions:
+            self._positions[route_id] = positions(route, self.stations)
+        match = self._positions[route_id]
+        distance = round(match[0][alight] - match[0][board]) if match else None
+        if distance == 0:
+            distance = None
+        average = route.get('averageDurationMinutes')
+        duration = round(average * 60 * distance / match[1][-1]) if (match and match[1][-1] > 0 and distance is not None
+                    and type(average) in (int, float) and average > 0) else None
+        return s.Bus(segmentId=identity, routeId='cheonan-route-' + route_id, routeName=route['name'],
+            boardStation=self.ref(route['stops'][board]), alightStation=self.ref(route['stops'][alight]),
+            boardSequence=board+1, alightSequence=alight+1, stopCount=alight-board,
+            durationSeconds=duration, distanceMeters=distance)
+
+    def detailed_bus(self, route_id, board, alight, identity):
+        bus = self.bus(route_id, board, alight, identity)
+        route = self.routes[route_id]
+        stops = route['stops']
+        # BIS free-form route descriptions can be stale (e.g. 192). Use the
+        # actual terminus, or the next stop when the terminus name repeats here.
+        terminal = self.stations[stops[-1]]['name']
+        direction_stop = self.stations[stops[board+1]]['name'] if terminal == bus.boardStation.name else terminal
+        direction = f'{direction_stop} 방면'
+        refs = [s.RouteStop(**self.ref(sid).model_dump(), sequence=index, coordinates=self.coordinates(sid))
+                for index, sid in enumerate(stops[board:alight+1], board+1)]
+        match = self._positions[route_id]
+        path = clip_path(route['geometry'], match[1], match[0][board], match[0][alight]) if bus.distanceMeters else []
+        return bus.model_copy(update={'directionLabel': direction, 'stops': refs, 'path': path})
+
+    def destination_candidates(self, destination):
+        if destination.coordinates is None:
+            return []
+        point = destination.coordinates
+        return self.candidates(destination.destinationId, destination.name, point.latitude, point.longitude)
+
+    @lru_cache(maxsize=256)
+    def candidates(self, destination_id, destination_name, latitude, longitude):
+        destination = self.walks['destinations'].get(destination_id, {})
+        origin_sid = self.origin['publicId']
+        blocked = {origin_sid, OPPOSITE_TERMINAL_SIDE.get(origin_sid)}
+        destination_point = {'latitude': latitude, 'longitude': longitude}
+        direct_walk = self.direct_walk(destination_id)
+        distances_to_goal = {}
+
+        def distance_to_goal(sid):
+            if sid not in distances_to_goal:
+                distances_to_goal[sid] = haversine_meters(self.stations[sid], destination_point)
+            return distances_to_goal[sid]
+
+        separation = distance_to_goal(origin_sid)
+        # A street approach can briefly lead away from the goal. Bound the
+        # distance lost from the closest point already reached, not each turn.
+        reverse_allowance = 450 + min(550, .10 * separation)
+        distance_limit = max(separation + 1800, separation * 3.2,
+                             direct_walk['distanceMeters'] * 2.1 if direct_walk else 0)
+
+        target = defaultdict(list)
+        for access in destination.get('access', []):
+            alight_sid = access['stationId']
+            if alight_sid in blocked or access['distanceMeters'] > MAX_ALIGHT_WALK_METERS:
+                continue
+            if direct_walk and all(direct_walk[key] <= access[key] for key in ('distanceMeters', 'durationSeconds')):
+                continue  # Riding cannot improve a trip whose final walk alone is longer.
+            for route_id, alight in self.occurrences[alight_sid]:
+                stops = self.routes[route_id]['stops']
+                for board in range(alight):
+                    target[stops[board]].append((route_id, board, alight, access))
+        paths = []
+        direct_access = set()
+        for route_id, board, alight, access in target[origin_sid]:
+            if blocked.isdisjoint(self.routes[route_id]['stops'][board+1:alight+1]):
+                paths.append(([(route_id, board, alight)], access, None))
+        for route_id, board in self.occurrences[origin_sid]:
+            stops = self.routes[route_id]['stops']
+            visited = {origin_sid}
+            for transfer in range(board + 1, len(stops)):
+                if stops[transfer] in blocked:
+                    break
+                visited.add(stops[transfer])
+                for next_id, next_board, next_alight, access in target[stops[transfer]]:
+                    if route_id == next_id:
+                        continue
+                    onward = self.routes[next_id]['stops'][next_board+1:next_alight+1]
+                    if not blocked.isdisjoint(onward) or not visited.isdisjoint(onward):
+                        continue
+                    paths.append(([(route_id, board, transfer), (next_id, next_board, next_alight)], access, stops[transfer]))
+
+        evaluated = []
+        direct_metrics = []
+        for path in paths:
+            legs, access, _ = path
+            stop_sequences = tuple(tuple(self.routes[rid]['stops'][board:alight+1]) for rid, board, alight in legs)
+            if len(legs) == 2 and any((rid, access['stationId']) in direct_access for rid, _, _ in legs):
+                continue  # The same line can already make this trip without changing buses.
+            if not self.makes_forward_progress(stop_sequences, distance_to_goal, reverse_allowance):
+                continue
+            # A lower bound can disqualify an obvious detour if route geometry
+            # is missing. It never substitutes for the displayed road distance.
+            lower_bound = access['distanceMeters'] + sum(
+                self.stop_distance(a, b) for sequence in stop_sequences for a, b in zip(sequence, sequence[1:])
+            )
+            if lower_bound > distance_limit:
+                continue
+            buses = [self.bus(rid, board, alight, 'bus') for rid, board, alight in legs]
+            distance = total([p.distanceMeters for p in buses] + [access['distanceMeters']])
+            if distance is not None and distance > distance_limit:
+                continue
+            metrics = {
+                'fastest': total([p.durationSeconds for p in buses] + [access['durationSeconds']]),
+                'transfers': len(legs) - 1,
+                'walking': access['distanceMeters'],
+                'distance': distance,
+            }
+            evaluated.append((path, stop_sequences, metrics, lower_bound))
+            if len(legs) == 1:
+                direct_access.add((legs[0][0], access['stationId']))
+                direct_metrics.append(metrics)
+
+        shortest = min((metrics['distance'] for _, _, metrics, _ in evaluated
+                        if metrics['distance'] is not None), default=None)
+        if shortest is not None:
+            distance_limit = min(distance_limit, max(shortest + 1200, shortest * 1.6))
+        best_by_bus_numbers = {}
+        for path, stop_sequences, metrics, lower_bound in evaluated:
+            distance = metrics['distance']
+            if (distance if distance is not None else lower_bound) > distance_limit:
+                continue
+            legs, access, _ = path
+            if metrics['transfers'] and not worthwhile_transfer(metrics, direct_metrics):
+                continue
+            bus_numbers = tuple(self.routes[rid]['name'] for rid, _, _ in legs)
+            identity = 'cheonan-option-' + digest([legs, access])
+            key = ranking_key(metrics, 'walking', identity)
+            if bus_numbers not in best_by_bus_numbers or key < best_by_bus_numbers[bus_numbers][0]:
+                best_by_bus_numbers[bus_numbers] = (key, path, stop_sequences, metrics)
+
+        shortlist = {}
+        for key, path, stop_sequences, _ in best_by_bus_numbers.values():
+            if len(path[0]) == 1:
+                shortlist[key[-1]] = (path, stop_sequences)
+        for mode in SORTS:
+            ordered = sorted(best_by_bus_numbers.values(), key=lambda row: ranking_key(row[3], mode, row[0][-1]))
+            groups = {}
+            for row in ordered:
+                groups.setdefault(row[2], []).append(row)
+            # Include transfer choices from the best path groups for each sort.
+            for variants in list(groups.values())[:3]:
+                for key, path, stop_sequences, _ in variants:
+                    shortlist[key[-1]] = (path, stop_sequences)
+        candidates = []
+        for option_id, ((legs, access, transfer), stop_sequences) in shortlist.items():
+            segments = []
+            for index, (rid, board, alight) in enumerate(legs):
+                identity = f'bus-{index+1}'
+                if index:
+                    segments.append(s.Transfer(segmentId=f'transfer-{index}', fromSegmentId=f'bus-{index}',
+                        toSegmentId=identity, atStation=self.ref(transfer)))
+                segments.append(self.detailed_bus(rid, board, alight, identity))
+            alight_ref = segments[-1].alightStation
+            from_label = alight_ref.name + (f' ({alight_ref.arsId}번)' if alight_ref.arsId else '') + ' 정류장'
+            segments.append(s.Walk(segmentId='destination-walk', fromLabel=from_label,
+                toLabel=destination_name, distanceMeters=access['distanceMeters'], durationSeconds=access['durationSeconds']))
+            buses = [p for p in segments if p.type == 'bus']
+            walks = [p for p in segments if p.type == 'walk']
+            option = s.RouteOption(routeOptionId=option_id, routeSnapshotVersion='cheonan-v-' + digest([self.revision, [p.model_dump(mode='json') for p in segments]]),
+                pathGroupId='cheonan-path-' + digest(stop_sequences),
+                journeyStatus='ready', routeNames=[p.routeName for p in buses], directionLabels=[p.directionLabel for p in buses],
+                transferCount=max(0,len(legs)-1),
+                totalDurationSeconds=None, walkingDurationSeconds=total([p.durationSeconds for p in walks]),
+                walkingDistanceMeters=total([p.distanceMeters for p in walks]),
+                totalDistanceMeters=total([p.distanceMeters for p in segments if p.type != 'transfer']),
+                estimatedTravelSeconds=total([p.durationSeconds for p in segments if p.type != 'transfer']),
+                boardStation=buses[0].boardStation, alightStation=buses[-1].alightStation,
+                transferStations=[p.atStation for p in segments if p.type == 'transfer'], dataSource='cheonan-bis-static')
+            family = tuple(rid for rid, _, _ in legs)
+            candidates.append((family, option, segments))
+        return candidates
+
+    def search(self, session, request, destination, now, data_mode):
+        self.require_origin(request.originStationId)
+        if abs((request.departAt - now).total_seconds()) > 120:
+            raise ServiceError(400, 'INVALID_REQUEST', '현재 시각에서 120초 이내의 출발 시각을 입력해 주세요.')
+        all_candidates = self.destination_candidates(destination)
+        minima = {mode: min((option_metrics(option)[mode] for _, option, _ in all_candidates
+                    if option_metrics(option)[mode] is not None), default=None) for mode in SORTS}
+        groups = set()
+        direct, representatives, variants = [], [], []
+        for _, option, segments in sorted(all_candidates, key=lambda row: sort_key(row[1], request.sort)):
+            if option.transferCount == 0:
+                direct.append((option, segments))
+                continue
+            if option.pathGroupId in groups:
+                variants.append((option, segments))
+            else:
+                groups.add(option.pathGroupId)
+                representatives.append((option, segments))
+        selected = direct + (representatives + variants)[:PREFERRED_TRANSFER_COUNT]
+        values = []
+        ordered = sorted(selected, key=lambda row: sort_key(row[0], request.sort))
+        for option, segments in ordered:
+            features = {'fastest': '최소 이동시간 · 대기 제외', 'transfers': '최소 환승', 'walking': '최소 도보', 'distance': '최단 이동거리'}
+            metrics = option_metrics(option)
+            option = option.model_copy(update={'features': [features[mode] for mode in SORTS
+                if minima[mode] is not None and metrics[mode] == minima[mode]]})
+            values.append((option, segments))
+        search_id = 'cheonan-search-' + uuid4().hex
+        saved = {}
+        for option, segments in values:
+            detail = s.RouteDetail(routeSearchId=search_id, routeOptionId=option.routeOptionId, routeSnapshotVersion=option.routeSnapshotVersion,
+                originStationId=request.originStationId, destinationId=request.destinationId, computedAt=now,
+                journeyStatus='ready', referenceDataQuality=quality(None, self.retrieved, now, 'cheonan-bis-static'), segments=segments,
+                dataSource='cheonan-bis-static', routingNotice=NOTICE, estimatedTravelSeconds=option.estimatedTravelSeconds,
+                totalDistanceMeters=option.totalDistanceMeters, walkingDistanceMeters=option.walkingDistanceMeters)
+            raw = detail.model_dump(mode='json')
+            saved[option.routeOptionId] = {'kind': 'cheonan-reference', 'revision': self.revision, 'detail': raw, 'checksum': digest(raw)}
+        session.add(RouteSearch(search_id=search_id, origin_station_id=request.originStationId, destination_id=request.destinationId,
+            created_at=now.timestamp(), expires_at=(now+timedelta(minutes=10)).timestamp(), data_mode=data_mode, snapshot=saved))
+        return s.SearchData(routeSearchId=search_id, originStationId=request.originStationId, destinationId=request.destinationId,
+            expiresAt=now+timedelta(minutes=10), routeOptions=[o for o,_ in values], sortedBy=request.sort,
+            routingNotice=NOTICE, referenceRetrievedAt=self.retrieved)
+
+    def checked_detail(self, search, option_id, destination, expected=None):
+        detail = self._saved_detail(search, option_id, expected)
+        options = self.destination_candidates(destination)
+        if not any(option.routeOptionId == option_id and option.routeSnapshotVersion == detail.routeSnapshotVersion
+                   and segments == detail.segments for _, option, segments in options):
+            changed()
+        return detail
+
+    def checked_details(self, search, destination):
+        candidates = {option.routeOptionId: (option.routeSnapshotVersion, segments)
+                      for _, option, segments in self.destination_candidates(destination)} if search.snapshot else {}
+        details = []
+        for option_id in search.snapshot:
+            detail = self._saved_detail(search, option_id)
+            if candidates.get(option_id) != (detail.routeSnapshotVersion, detail.segments):
+                changed()
+            details.append(detail)
+        return details
+
+    def _saved_detail(self, search, option_id, expected=None):
+        saved = search.snapshot.get(option_id)
+        if saved is None:
+            not_found()
+        try:
+            if saved['kind'] != 'cheonan-reference' or saved['checksum'] != digest(saved['detail']):
+                unavailable()
+            detail = s.RouteDetail.model_validate(saved['detail'])
+        except (KeyError, TypeError, ValidationError):
+            unavailable()
+        if saved['revision'] != self.revision or (expected and expected != detail.routeSnapshotVersion):
+            changed()
+        if (detail.routeSearchId != search.search_id or detail.routeOptionId != option_id or
+                detail.originStationId != search.origin_station_id or detail.destinationId != search.destination_id or
+                detail.computedAt.timestamp() != search.created_at):
+            unavailable()
+        return detail

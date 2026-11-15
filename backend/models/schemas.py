@@ -5,6 +5,8 @@ from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, StringConstrai
 
 Category = Literal['hospital', 'market', 'terminal', 'station', 'other']
 JourneyStatus = Literal['ready', 'recheck_required', 'unavailable']
+ConversationSort = Literal['walking', 'transfers', 'fastest']
+JourneyIntent = Literal['which_bus', 'how_many', 'where_board', 'where_alight', 'stop_count', 'walk', 'duration']
 Identifier = Annotated[str, StringConstraints(strict=True, min_length=1, max_length=200)]
 Nonnegative = Annotated[int, Field(ge=0)]
 NOTICE = '시연 데이터 · 실제 운행 정보 아님'
@@ -23,7 +25,7 @@ class Error(Model):
 class Meta(Model):
     requestId: str
     generatedAt: AwareDatetime
-    dataMode: Literal['demo', 'live']
+    dataMode: Literal['demo', 'live', 'static']
 
 
 T = TypeVar('T')
@@ -36,8 +38,8 @@ class Envelope(Model, Generic[T]):
 
 
 class Coordinates(Model):
-    latitude: Annotated[float, Field(allow_inf_nan=False)]
-    longitude: Annotated[float, Field(allow_inf_nan=False)]
+    latitude: Annotated[float, Field(ge=-90, le=90, allow_inf_nan=False)]
+    longitude: Annotated[float, Field(ge=-180, le=180, allow_inf_nan=False)]
 
 
 class Station(Model):
@@ -46,6 +48,7 @@ class Station(Model):
     directionLabel: str
     region: str | None
     coordinates: Coordinates | None
+    arsId: str | None = None
 
 
 class StationData(Model):
@@ -57,6 +60,14 @@ class Destination(Model):
     name: str
     category: Category
     aliases: list[str]
+    address: str | None = None
+    placeKind: str | None = None
+    coordinates: Coordinates | None = None
+    distanceMeters: Annotated[float, Field(ge=0, allow_inf_nan=False)] | None = None
+    distanceBasis: Literal['straight_line'] | None = None
+    walkingDistanceMeters: Nonnegative | None = None
+    sourceUrl: str | None = None
+    coordinateSourceUrl: str | None = None
 
 
 class DestinationData(Model):
@@ -68,6 +79,8 @@ class DestinationQuery(BaseModel):
     originStationId: Identifier
     query: Annotated[str, StringConstraints(strip_whitespace=True, max_length=100)] = ''
     category: Category | None = None
+    kind: Literal['hospital', 'office', 'market', 'shopping', 'terminal', 'station', 'education', 'culture'] | None = None
+    sort: Literal['distance', 'name', 'walking'] = 'distance'
 
 
 class Quality(Model):
@@ -80,6 +93,12 @@ class Quality(Model):
 class StationRef(Model):
     stationId: Identifier
     name: str
+    arsId: str | None = None
+
+
+class RouteStop(StationRef):
+    sequence: Annotated[int, Field(ge=1)]
+    coordinates: Coordinates
 
 
 class Bus(Model):
@@ -93,6 +112,10 @@ class Bus(Model):
     alightSequence: Annotated[int, Field(ge=1)]
     stopCount: Annotated[int, Field(ge=1)]
     durationSeconds: Nonnegative | None
+    distanceMeters: Nonnegative | None = None
+    directionLabel: str | None = None
+    stops: list[RouteStop] = Field(default_factory=list)
+    path: list[Coordinates] = Field(default_factory=list)
 
 
 class Walk(Model):
@@ -119,17 +142,31 @@ Segment = Annotated[Bus | Walk | Transfer, Field(discriminator='type')]
 class RouteOption(Model):
     routeOptionId: Identifier
     routeSnapshotVersion: str
+    pathGroupId: Identifier | None = None
     journeyStatus: JourneyStatus
     routeNames: list[str]
+    directionLabels: list[str] = Field(default_factory=list)
     transferCount: Annotated[int, Field(ge=0, le=1)]
     totalDurationSeconds: Nonnegative | None
     walkingDurationSeconds: Nonnegative | None
+    walkingDistanceMeters: Nonnegative | None = None
+    totalDistanceMeters: Nonnegative | None = None
+    estimatedTravelSeconds: Nonnegative | None = None
+    waitingDurationSeconds: Nonnegative | None = None
+    boardStation: StationRef | None = None
+    alightStation: StationRef | None = None
+    transferStations: list[StationRef] = Field(default_factory=list)
+    features: list[str] = Field(default_factory=list)
+    dataSource: str | None = None
+    reasonText: str | None = None
 
 
 class SearchRequest(Model):
     originStationId: Identifier
     destinationId: Identifier
     departAt: AwareDatetime
+    sort: Literal['fastest', 'transfers', 'walking', 'distance'] = 'transfers'
+    explain: bool = False
 
     @field_validator('departAt', mode='before')
     @classmethod
@@ -151,7 +188,10 @@ class SearchData(Model):
     originStationId: Identifier
     destinationId: Identifier
     expiresAt: AwareDatetime
-    routeOptions: list[RouteOption] = Field(max_length=3)
+    routeOptions: list[RouteOption]
+    sortedBy: str | None = None
+    routingNotice: str | None = None
+    referenceRetrievedAt: AwareDatetime | None = None
 
 
 class RouteDetail(Model):
@@ -164,6 +204,11 @@ class RouteDetail(Model):
     journeyStatus: JourneyStatus
     referenceDataQuality: Quality
     segments: list[Segment]
+    dataSource: str | None = None
+    routingNotice: str | None = None
+    estimatedTravelSeconds: Nonnegative | None = None
+    totalDistanceMeters: Nonnegative | None = None
+    walkingDistanceMeters: Nonnegative | None = None
 
 
 class Arrival(Model):
@@ -195,9 +240,17 @@ class ServiceChanges(Model):
     dataQuality: Quality
 
 
-class LiveData(Model):
+class OptionArrivals(Model):
     routeSnapshotVersion: str
     arrivals: list[Arrival]
+
+
+class SearchArrivals(Model):
+    routeSearchId: Identifier
+    options: dict[Identifier, OptionArrivals]
+
+
+class LiveData(OptionArrivals):
     serviceChanges: ServiceChanges
 
 
@@ -223,6 +276,32 @@ class InterpretationData(Model):
     reasonCode: Literal['MATCHED', 'USER_CONFIRMATION_REQUIRED', 'NO_REGISTERED_MATCH', 'AI_UNAVAILABLE']
 
 
+class ClarificationOption(Model):
+    destinationId: Identifier
+    label: str
+
+
+class Clarification(Model):
+    question: str
+    options: list[ClarificationOption]
+
+
+class ConversationData(InterpretationData):
+    sort: ConversationSort | None = None
+    clarification: Clarification | None = None
+
+
+class QuestionRequest(SelectionRequest):
+    question: Annotated[str, StringConstraints(strict=True, strip_whitespace=True, min_length=1, max_length=200)]
+    previousIntent: JourneyIntent | None = None
+
+
+class AnswerData(Model):
+    status: Literal['ok', 'unavailable']
+    intent: JourneyIntent | Literal['repeat', 'unknown'] | None = None
+    text: str | None = None
+
+
 class Step(Model):
     segmentId: Identifier
     text: str
@@ -241,6 +320,7 @@ class PrintData(Model):
     liveInfoSnapshot: LiveData
     notice: str
     guidance: GuidanceData
+    headline: str | None = None
 
 
 class AIInterpretation(Model):

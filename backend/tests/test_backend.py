@@ -224,7 +224,8 @@ def test_service_change_invalidates_all_selected_apis(env, scenario):
     provider.scenario = scenario
     for response in [client.get(path),client.get(path+'/live'),client.post('/api/v1/easy-guidance',json=body),
                      client.post('/api/v1/print-guides',json=body)]:
-        assert_error(response,409,'ROUTE_VERSION_CHANGED')
+        code = 'ROUTE_UNAVAILABLE' if scenario in ('cancellation', 'detour') else 'ROUTE_VERSION_CHANGED'
+        assert_error(response,409,code)
     assert search(client, clock).json()['data']['routeOptions'] == []
 
 
@@ -488,7 +489,7 @@ def test_openapi_and_actual_json(env):
     assert client.get('/docs').status_code == 200
     schema = client.get('/openapi.json').json()
     operations = [v for p in schema['paths'].values() for v in p.values()]
-    assert len(operations) == 8
+    assert len(operations) == 10
     assert all('422' not in v['responses'] and '400' in v['responses'] for v in operations)
     assert schema['components']['schemas']['SearchRequest']['required'] == ['originStationId','destinationId','departAt']
     assert schema['components']['schemas']['Bus']['properties']['type']['const'] == 'bus'

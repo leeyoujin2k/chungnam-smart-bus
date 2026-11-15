@@ -174,13 +174,13 @@ BAD_GUIDANCE = {
 
 @unittest.skipIf(create_app is None, '백엔드 의존성 미설치')
 class WalkDurationTextTest(unittest.TestCase):
-    """합성 데이터는 거리·시간이 null이라 API로는 드러나지 않는 분 단위 표시(3cd2fd2)를 직접 확인한다."""
+    """도보 안내가 화면·인쇄와 같은 분 단위 올림을 적용하는지 확인한다."""
 
     def test_walk_duration_wording(self):
         from backend.models.schemas import Walk
         from backend.services.ai import template_text
         cases = [(45, '이동 시간은 45초입니다.'), (60, '이동 시간은 약 1분입니다.'),
-                 (89, '이동 시간은 약 1분입니다.'), (90, '이동 시간은 약 2분입니다.'),
+                 (89, '이동 시간은 약 2분입니다.'), (90, '이동 시간은 약 2분입니다.'),
                  (420, '이동 시간은 약 7분입니다.')]
         for seconds, expected in cases:
             with self.subTest(seconds=seconds):
@@ -218,6 +218,89 @@ class BackendRejectsBadOutputTest(unittest.TestCase):
                 data, elapsed = self.run_case(FakeAdapter(guide=broken), lambda c: c.guidance('003'))
                 self.assertEqual(data['mode'], 'template_fallback')
                 self.assertLess(elapsed, 1.5)
+
+
+class RecordingAdapter(RuleBasedAIAdapter):
+    """백엔드가 AI에 넘긴 allowedDestinations를 기록한다."""
+    seen = None
+
+    def interpret_destination(self, payload):
+        RecordingAdapter.seen = payload['allowedDestinations']
+        return super().interpret_destination(payload)
+
+
+@unittest.skipIf(create_app is None, '백엔드 의존성 미설치')
+class CheonanConversationTest(unittest.TestCase):
+    """공개 API에서 천안 목적지 확인, 경로 정렬, 이유, 질문, 인쇄를 검증한다."""
+    ORIGIN = 'cheonan-stop-285000686'
+
+    def setUp(self):
+        from ai.evaluation.run_eval import load_cases
+        self.cases = load_cases()
+        app = create_app(Settings(database_url='sqlite:///:memory:', data_mode='static'),
+                         ai_adapter=RecordingAdapter(), place_catalog='cheonan', transport_catalog='cheonan')
+        self.client = self.enterContext(TestClient(app))
+
+    def post(self, path, body):
+        response = self.client.post('/api/v1' + path, json=body)
+        self.assertEqual(response.status_code, 200, response.text)
+        return response.json()['data']
+
+    def test_cases_use_backend_allowed_destinations(self):
+        """cases.json의 cheonan 목록이 백엔드가 AI에 넘기는 목록과 같아야 평가가 의미 있다."""
+        self.post('/destination-interpretations', {'originStationId': self.ORIGIN, 'text': '시장'})
+        def shape(items):  # 순서는 백엔드가 다시 맞추므로 내용만 비교
+            return {d['destinationId']: (d['name'], sorted(d['aliases'])) for d in items}
+        self.assertEqual(shape(RecordingAdapter.seen), shape(self.cases['destinationSets']['cheonan']))
+
+    def test_end_to_end_sentences(self):
+        examples = [
+            ('중앙시장 가는데 많이 안 걷고 싶어요', 'cheonan-central-market', True),
+            ('갈아타기 싫어요 단국대병원', 'cheonan-dankook-hospital', False),
+            ('갈아타기 싫어요 순천향대병원', 'cheonan-soonchunhyang-hospital', True),
+            ('성정시장 급해요', 'cheonan-seongjeong-market', True),
+            ('고속터미널 가요', 'cheonan-express-terminal', False),
+        ]
+        for text, destination_id, has_route in examples:
+            with self.subTest(text=text):
+                understood = self.post('/conversation/understand', {'originStationId': self.ORIGIN, 'text': text})
+                self.assertEqual(understood['status'], 'matched')
+                self.assertEqual([candidate['destinationId'] for candidate in understood['candidates']], [destination_id])
+                sort = understood['sort'] or 'transfers'
+                if destination_id == 'cheonan-central-market':
+                    self.assertEqual(sort, 'walking')
+                search = self.post('/route-searches', {
+                    'originStationId': self.ORIGIN, 'destinationId': destination_id,
+                    'departAt': datetime.now(timezone.utc).isoformat(), 'sort': sort, 'explain': True})
+                self.assertEqual(search['sortedBy'], sort)
+                if not has_route:
+                    self.assertEqual(search['routeOptions'], [])
+                    if destination_id == 'cheonan-express-terminal':
+                        self.assertGreater(understood['candidates'][0]['walkingDistanceMeters'], 0)
+                    continue
+                self.assertTrue(search['routeOptions'])
+                option = search['routeOptions'][0]
+                self.assertTrue(option['reasonText'])
+                selection = {'routeSearchId': search['routeSearchId'], 'routeOptionId': option['routeOptionId'],
+                             'expectedRouteSnapshotVersion': option['routeSnapshotVersion']}
+                printed = self.post('/print-guides', selection)
+                self.assertIn(option['routeNames'][0], printed['headline'])
+                for question in ['몇 번 버스 타요?', '어디서 내려요?', '얼마나 걸어요?', '얼마나 걸려요?']:
+                    answer = self.post('/conversation/answers', {**selection, 'question': question})
+                    self.assertEqual(answer['status'], 'ok', (question, answer))
+                repeated = self.post('/conversation/answers', {**selection, 'question': '다시 말해 주세요',
+                                                               'previousIntent': answer['intent']})
+                self.assertEqual(repeated['text'], answer['text'])
+                stale = self.client.post('/api/v1/conversation/answers',
+                    json={**selection, 'expectedRouteSnapshotVersion': 'stale', 'question': '몇 번 버스 타요?'})
+                self.assertEqual(stale.status_code, 409)
+
+    def test_clarify_uses_backend_candidates(self):
+        data = self.post('/conversation/understand', {'originStationId': self.ORIGIN, 'text': '터미널 가고 싶어요'})
+        self.assertEqual(data['status'], 'needs_confirmation')
+        out = data['clarification']
+        self.assertEqual(out['question'], '천안종합버스터미널과 천안고속버스터미널 중 어디로 가시나요?')
+        self.assertEqual([o['destinationId'] for o in out['options']], [c['destinationId'] for c in data['candidates']])
 
 
 if __name__ == '__main__':
