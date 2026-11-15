@@ -1,4 +1,4 @@
-import { Fragment, useState, type ReactNode } from 'react';
+import { Fragment, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import type { OptionArrivals, RouteOption, StationRef } from '../../shared/api/types';
 import { currentArrival, formatBusLabel, formatDistance, formatDuration } from '../../shared/api/format';
 import { routeTiming, simulatedArrivalLabel } from '../../shared/prototypeTiming';
@@ -22,17 +22,21 @@ function Icon({file, className = ''}: {file: string; className?: string}) {
   return <span className={`${s.asset} ${s.cardIcon} ${className}`} aria-hidden="true"><img src={`/assets/${file}`} alt="" /></span>;
 }
 
-export function RouteCardHeader({names, transferCount, duration, arrival, action, busChoices}: {
-  names: string[]; transferCount: number; duration: number | null; arrival?: string; action: ReactNode; busChoices?: ReactNode;
+function BusNumbers({names}: {names: string[]}) {
+  return names.map((name, index) => <Fragment key={index}>
+    {index > 0 && <Icon file="3aff1.svg" className={s.routeBusArrow} />}
+    <strong>{formatBusLabel(name).replace(/ 버스$/, '')}</strong>
+  </Fragment>);
+}
+
+export function RouteCardHeader({names, transferCount, duration, arrival, action}: {
+  names: string[]; transferCount: number; duration: number | null; arrival?: string; action: ReactNode;
 }) {
   return <span className={s.routeCardHeader}>
     <span className={s.routeCardInfo}>
-      <span className={`${s.routeLine} ${busChoices ? s.routeLineWithChoices : ''}`}>
+      <span className={s.routeLine}>
         <span className={s.routeKind}>{names.length ? (transferCount ? `환승 ${transferCount}회` : '직행') : '도보'}</span>
-        {busChoices ?? names.map((name, index) => <Fragment key={index}>
-          {index > 0 && <Icon file="3aff1.svg" className={s.routeBusArrow} />}
-          <strong>{formatBusLabel(name).replace(/ 버스$/, '')}</strong>
-        </Fragment>)}
+        <BusNumbers names={names} />
       </span>
       <span className={s.routeTimes}>
         <strong aria-label={`예상 이동시간 ${formatDuration(duration)}`}>{duration == null ? '이동시간 확인 불가' : `약 ${formatDuration(duration)}`}</strong>
@@ -50,7 +54,12 @@ function stationLabel(station: StationRef) {
 interface RouteCardData {
   option: RouteOption;
   arrival: string;
+  compactArrival: string;
   wait: number;
+}
+
+function compareWait(a: RouteCardData, b: RouteCardData) {
+  return a.wait === b.wait ? 0 : a.wait - b.wait;
 }
 
 function RouteCardStations({option}: {option: RouteOption}) {
@@ -88,40 +97,64 @@ function busSequence(option: RouteOption) {
   return option.routeNames.map(name => formatBusLabel(name).replace(/ 버스$/, '')).join(' → ');
 }
 
-function GroupedRouteCard({cards, alight, recommended, selected, busy, simulate, onChoose}: {
+function GroupedRouteCard({cards, board, alight, recommended, selected, busy, onChoose}: {
   cards: RouteCardData[];
+  board: StationRef;
   alight: StationRef;
-} & Pick<Props, 'recommended' | 'selected' | 'busy' | 'simulate' | 'onChoose'>) {
-  const [busChoice, setBusChoice] = useState<string | null>(null);
-  const [showAllBuses, setShowAllBuses] = useState(false);
-  const active = cards.find(card => card.option.routeOptionId === (busChoice ?? selected))
-    ?? cards.find(card => card.option.journeyStatus === 'ready') ?? cards[0];
-  const {option} = active;
-  const timing = routeTiming(option, simulate);
-  const sequence = busSequence(option);
-  const visibleBuses = showAllBuses ? cards : cards.slice(0, 6);
-  const busChoices = visibleBuses.includes(active) ? visibleBuses : [...visibleBuses.slice(0, 5), active];
+} & Pick<Props, 'recommended' | 'selected' | 'busy' | 'onChoose'>) {
+  const ordered = [...cards].sort(compareWait);
+  const otherBuses = ordered.slice(2);
+  const [expanded, setExpanded] = useState(() => otherBuses.some(({option}) => option.routeOptionId === selected));
+  const disclosure = useRef<HTMLButtonElement>(null);
+  const restoreFocus = useRef(false);
+  useLayoutEffect(() => {
+    if (!restoreFocus.current) return;
+    restoreFocus.current = false;
+    disclosure.current?.focus();
+  }, [expanded]);
+
+  function toggleRows() {
+    restoreFocus.current = true;
+    setExpanded(value => !value);
+  }
+
+  const visibleBuses = expanded ? otherBuses : ordered.slice(0, 2);
   const heading = `${busSequence(cards[0].option)} 등 ${cards.length}개 · ${stationLabel(alight)} 하차`;
+  const transferCount = cards[0].option.transferCount;
+  const reason = cards[0].option.reasonText;
 
   return <div className={`${s.comparisonCard} ${s.groupedRouteCard} ${recommended ? s.recommendedCard : ''}`}
     role="group" aria-label={heading}>
-    <RouteCardHeader names={option.routeNames} transferCount={option.transferCount} duration={timing.total ?? timing.movement}
-      arrival={active.arrival}
-      busChoices={<span className={s.groupedBusChoices} role="group" aria-label="이용할 버스 선택">
-        {busChoices.map(card => <button key={card.option.routeOptionId} type="button" className={s.groupedBusChoice}
-          aria-pressed={card === active} disabled={busy || card.option.journeyStatus !== 'ready'}
-          onClick={() => setBusChoice(card.option.routeOptionId)}>{busSequence(card.option)}</button>)}
-        {cards.length > 6 && <button type="button" className={s.groupedBusChoice}
-          aria-expanded={showAllBuses} onClick={() => setShowAllBuses(!showAllBuses)}>
-          {showAllBuses ? '접기' : `${cards.length - busChoices.length}개 더 보기`}
-        </button>}
-      </span>}
-      action={<button type="button" className={`${s.cardAction} ${s.groupedRouteAction}`} aria-label={`이 경로 선택하기 · ${sequence}`}
-        disabled={busy || option.journeyStatus !== 'ready'} onClick={() => onChoose(option)}>
-        이 경로 선택하기 <Icon file="d682b.svg" />
-      </button>} />
-    <RouteCardStations option={option} />
-    <RouteNotes option={option} />
+    {expanded ? <>
+      <button type="button" ref={disclosure} className={s.groupBack} onClick={toggleRows} disabled={busy}>
+        <Icon file="d682b.svg" className={s.groupBackIcon} />이전
+      </button>
+      <h2 className={s.groupHeading}>이용할 버스를 선택해 주세요</h2>
+      <p className={s.groupSummary}>같은 경로의 버스 {otherBuses.length}개</p>
+    </> : <>
+      <h2 className={s.groupHeading}>
+        <span className={s.routeKind}>{transferCount ? `환승 ${transferCount}회` : '직행'}</span>
+        이용 가능한 버스 {cards.length}개
+      </h2>
+      <p className={s.groupSummary}><Icon file="92c82.svg" />{stationLabel(board)} - {stationLabel(alight)}</p>
+    </>}
+    <ul className={s.groupBusList} role="list" aria-label="이용할 버스 선택">
+      {visibleBuses.map(({option, arrival, compactArrival, wait}) => <li key={option.routeOptionId}>
+        <button type="button" className={s.groupBusRow} aria-label={`${busSequence(option)} · ${arrival}`}
+          aria-pressed={selected === option.routeOptionId}
+          disabled={busy || option.journeyStatus !== 'ready'} onClick={() => onChoose(option)}>
+          <span className={s.groupBusNumbers}><BusNumbers names={option.routeNames} /></span>
+          <span className={`${s.groupArrival} ${Number.isFinite(wait) ? s.groupArrivalKnown : ''}`}>
+            {compactArrival}<Icon file="d682b.svg" />
+          </span>
+        </button>
+      </li>)}
+    </ul>
+    {!expanded && otherBuses.length > 0 && <button type="button" ref={disclosure} className={s.groupMore}
+      aria-expanded={false} onClick={toggleRows} disabled={busy}>
+      다른 버스 {otherBuses.length}개 보기 <Icon file="d682b.svg" />
+    </button>}
+    {reason && <span className={s.routeReason}>{displayText(reason)}</span>}
   </div>;
 }
 
@@ -149,9 +182,10 @@ export function RouteCards({options, recommended = false, selected, busy, simula
       ? currentArrival(boarding, now) : null;
     const arrival = firstArrival?.label ?? (simulate && arrivals ? simulatedArrivalLabel(option.routeOptionId, 0)
       : checkingArrivals ? '도착 정보 확인 중' : '도착 정보 확인 불가');
-    return {option, arrival, wait: firstArrival?.waitSeconds ?? Infinity};
+    const compactArrival = firstArrival?.compactLabel ?? (arrival === '도착 정보 확인 불가' ? '도착 정보 없음' : arrival);
+    return {option, arrival, compactArrival, wait: firstArrival?.waitSeconds ?? Infinity};
   });
-  if (sortByWait) cards.sort((a, b) => a.wait === b.wait ? 0 : a.wait - b.wait);
+  if (sortByWait) cards.sort(compareWait);
   const groups = new Map<string, RouteCardData[]>();
   for (const card of cards) {
     const {option} = card;
@@ -167,8 +201,8 @@ export function RouteCards({options, recommended = false, selected, busy, simula
   return <div className={s.routeList} role="group" aria-label="이용 가능 경로">{displayedGroups.map(([key, group]) => {
     const {option, arrival} = group[0];
     if (group.length > 1 && option.boardStation && option.alightStation) {
-      return <GroupedRouteCard key={key} cards={group} alight={option.alightStation}
-        recommended={recommended} selected={selected} busy={busy} simulate={simulate} onChoose={onChoose} />;
+      return <GroupedRouteCard key={key} cards={group} board={option.boardStation} alight={option.alightStation}
+        recommended={recommended} selected={selected} busy={busy} onChoose={onChoose} />;
     }
     const timing = routeTiming(option, simulate);
     return <button key={option.routeOptionId} className={`${s.comparisonCard} ${recommended ? s.recommendedCard : ''}`} aria-pressed={selected === option.routeOptionId}

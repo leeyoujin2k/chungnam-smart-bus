@@ -470,7 +470,7 @@ describe('천안 실제 장소 선택', () => {
     expect(host.querySelector('[aria-label="선택한 경로"]')?.textContent).toContain('도착 정보 확인 불가');
   });
 
-  it('최단 도보 후보를 유지하고 같은 경로의 버스를 한 카드에서 비교하고 선택한다', async () => {
+  it('같은 경로에는 도착이 빠른 두 버스를 보여 주고 나머지는 카드 안에서 선택한다', async () => {
     const first = {...search().routeOptions[0], pathGroupId:'path-1', routeNames:['72'],
       walkingDistanceMeters:950, walkingDurationSeconds:855, estimatedTravelSeconds:1000,
       boardStation:{stationId:'demo-stop-001', name:'종합터미널'},
@@ -480,8 +480,13 @@ describe('천안 실제 장소 선택', () => {
     const longerWalk = {...first, routeOptionId:'option-4', pathGroupId:'path-3', routeNames:['72번'],
       walkingDistanceMeters:1000, walkingDurationSeconds:900, alightStation:{stationId:'demo-stop-004', name:'병원 옆'}};
     const differentStop = {...longerWalk, routeOptionId:'option-5', pathGroupId:'path-1', routeNames:['100']};
+    const third = {...first, routeOptionId:'option-6', routeNames:['75']};
+    const noArrival = {...first, routeOptionId:'option-7', routeNames:['78']};
+    const transfer = {...first, pathGroupId:'transfer-path', routeOptionId:'option-8', routeNames:['82','12'],
+      transferCount:1, transferStations:[{stationId:'demo-stop-002', name:'환승 정류장'}]};
+    const otherTransfer = {...transfer, routeOptionId:'option-9', routeNames:['83','12']};
     vi.mocked(api.search).mockResolvedValue(envelope({...search(),
-      routeOptions:[longerWalk,other,first,alternate,differentStop]}, 'static'));
+      routeOptions:[longerWalk,other,first,alternate,differentStop,noArrival,third,transfer,otherTransfer]}, 'static'));
     const observed = (routeId: string, etaSeconds: number) => ({
       routeSnapshotVersion:'v1', arrivals:[{
         segmentId:'bus-1', routeId, boardStationId:'demo-stop-001', arrivalStatus:'available' as const,
@@ -494,41 +499,45 @@ describe('천안 실제 장소 선택', () => {
       'option-2':observed('route-74', 60),
       'option-3':observed('route-201', 120),
       'option-4':observed('route-72', 30),
+      'option-6':observed('route-75', 540),
     }}, 'static'));
     await mount(); await click('화면으로 찾기'); await click('병원');
     await act(async () => { Array.from(host.querySelectorAll('button')).find(b => b.querySelector('strong')?.textContent === displayText(destination.name))!.click(); });
     const list = host.querySelector('[aria-label="이용 가능 경로"]')!;
-    const group = list.querySelector(`.${styles.groupedRouteCard}`)!;
-    expect(list.children).toHaveLength(3);
+    const group = list.querySelector('[role="group"][aria-label*="등 4개"]')!;
+    const busOrder = () => Array.from(group.querySelectorAll('li button'), row => row.getAttribute('aria-label'));
+    expect(list.children).toHaveLength(4);
     expect(list.firstElementChild?.textContent).toContain('201번');
-    expect(list.lastElementChild?.textContent).toContain('병원 옆');
+    expect(list.children[2].textContent).toContain('병원 옆');
     expect(group.textContent).not.toContain('병원 옆');
-    expect(group.textContent).toContain('하차 후 도보 950m · 약 15분');
-    expect(group.textContent).toContain('약 17분');
-    expect(group.textContent).toContain('약 5분 후 도착 예정');
-    expect(button('72번').getAttribute('aria-pressed')).toBe('true');
-    expect(button('이 경로 선택하기 · 72번').closest(`.${styles.routeCardHeader}`)).not.toBeNull();
+    expect(group.textContent).toContain('종합터미널 - 병원 앞');
+    expect(group.textContent).toContain('이용 가능한 버스 4개');
+    expect(busOrder()).toEqual(['74번 · 최근 조회 약 1분 후 도착 예정', '72번 · 최근 조회 약 5분 후 도착 예정']);
+    expect(list.lastElementChild?.textContent).toContain('환승 1회');
+    expect(list.querySelector('button[aria-label="82번 → 12번 · 도착 정보 확인 불가"]')).not.toBeNull();
 
     await click('최소 대기');
     expect(api.search).toHaveBeenCalledOnce();
     expect(button('최소 대기').getAttribute('aria-pressed')).toBe('true');
     expect(list.firstElementChild).toBe(group);
-    expect(button('74번').getAttribute('aria-pressed')).toBe('true');
-    expect(group.textContent).toContain('약 20분');
-    expect(group.textContent).toContain('약 1분 후 도착 예정');
-    await click('72번');
-    expect(button('72번').getAttribute('aria-pressed')).toBe('true');
+    await click('다른 버스 2개 보기');
+    expect(list.firstElementChild).toBe(group);
+    expect(heading()).toBe('어떤 경로로 이동하시겠어요?');
+    expect(group.textContent).toContain('같은 경로의 버스 2개');
+    expect(group.textContent).toContain('도착 정보 없음');
+    expect(busOrder()).toEqual(['75번 · 최근 조회 약 9분 후 도착 예정', '78번 · 도착 정보 확인 불가']);
+    expect(document.activeElement?.textContent).toBe('이전');
+    await act(async () => { group.querySelector<HTMLButtonElement>('button')!.click(); });
+    expect(document.activeElement?.textContent?.trim()).toBe('다른 버스 2개 보기');
     expect(api.detail).not.toHaveBeenCalled();
-    await click('74번');
-    vi.mocked(api.detail).mockResolvedValueOnce(envelope({...detail, routeOptionId:'option-2'}, 'static'));
+    await click('다른 버스 2개 보기');
+    vi.mocked(api.detail).mockResolvedValueOnce(envelope({...detail, routeOptionId:'option-6'}, 'static'));
     vi.mocked(api.live).mockResolvedValueOnce(envelope(live, 'static'));
-    await click('이 경로 선택하기 · 74번');
-    expect(api.detail).toHaveBeenLastCalledWith('search-1', 'option-2', expect.any(AbortSignal));
+    await click('75번 · 최근 조회 약 9분 후 도착 예정');
+    expect(api.detail).toHaveBeenLastCalledWith('search-1', 'option-6', expect.any(AbortSignal));
+    expect(heading()).toBe('선택한 경로를 확인해 주세요.');
     await click('이전');
-    await act(async () => {await vi.advanceTimersByTimeAsync(90_001);});
-    const returnedGroup = host.querySelector(`.${styles.groupedRouteCard}`)!;
-    expect(returnedGroup.textContent).toContain('도착 정보 확인 불가');
-    expect(button('74번').getAttribute('aria-pressed')).toBe('true');
+    expect(button('75번 · 최근 조회 약 9분 후 도착 예정').getAttribute('aria-pressed')).toBe('true');
   });
 
   it('관공서 분류와 장소 선택을 기존 API로 전달하고 주소·선택 상태를 유지한다', async () => {
