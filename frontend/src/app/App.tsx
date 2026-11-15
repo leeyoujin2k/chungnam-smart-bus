@@ -7,7 +7,7 @@ import { currentArrival, effectiveFreshness, formatBusLabel, formatDuration, for
 import { RouteCardHeader, RouteCards } from '../features/route-search/RouteCards';
 import { useVoiceGuide } from '../features/voice-guide/useVoiceGuide';
 import { routeSpeech, speechTexts } from '../features/voice-guide/speechText';
-import { PrintDocument } from '../features/print-guide/PrintDocument';
+import { measurePrintScale, PrintDocument } from '../features/print-guide/PrintDocument';
 import Keyboard from '../features/destination-search/Keyboard';
 import { SpeechInput } from '../features/ai-helper/SpeechInput';
 import { MicrophoneIcon } from '../features/ai-helper/MicrophoneIcon';
@@ -149,7 +149,9 @@ export function App() {
   const [sort, setSort] = useState<RouteOrder>('transfers');
   const [placeSort, setPlaceSort] = useState<PlaceSort>('walking');
   const [searchArrivals, setSearchArrivals] = useState<SearchArrivals | null>(null);
+  const [printLayout, setPrintLayout] = useState<{ guideId: string; scale: number } | null>(null);
   const shell = useRef<HTMLDivElement>(null);
+  const printContent = useRef<HTMLDivElement>(null);
   const activity = useRef(Date.now());
   const request = useRef<AbortController | null>(null);
   const printListener = useRef<(() => void) | null>(null);
@@ -348,7 +350,14 @@ export function App() {
     if (!state.detail) return;
     void run(async signal => {
       const r = await api.printGuide(selection(state.detail!), signal); if (signal.aborted) return;
-      flushSync(() => patch({ print: r.data, busy: false }));
+      flushSync(() => patch({ print: r.data }));
+      const content = printContent.current;
+      const scale = content ? await measurePrintScale(content) : 1;
+      if (signal.aborted || current.current.screen !== 'print') return;
+      flushSync(() => {
+        setPrintLayout({ guideId: r.data.printGuideId, scale });
+        patch({ busy: false });
+      });
       clearPrintListener();
       const after = () => { if (current.current.print?.printGuideId === r.data.printGuideId && current.current.screen === 'print') patch({ screen: 'done' }); clearPrintListener(); };
       printListener.current = after;
@@ -585,7 +594,9 @@ export function App() {
       {state.busy && !printPending && <div className={s.loading} role="status"><span />확인하고 있어요…</div>}
       {idle !== null && <IdleDialog count={idle} resume={() => { activity.current = Date.now(); setIdle(null); }} end={reset} />}
     </div>
-    {state.print && <PrintDocument snapshot={state.print} originName={originName} destinationName={state.destination?.name ?? ''} />}
+    {state.print && <PrintDocument contentRef={printContent} snapshot={state.print} originName={originName}
+      destinationName={state.destination?.name ?? ''}
+      scale={printLayout?.guideId === state.print.printGuideId ? printLayout.scale : undefined} />}
   </StateContext.Provider>;
 }
 function IdleDialog({ count, resume, end }: { count: number; resume: () => void; end: () => void }) {

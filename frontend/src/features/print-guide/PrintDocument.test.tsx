@@ -51,18 +51,17 @@ describe('고정 인쇄 안내표', () => {
   it('환승 시 다음 버스와 타는 곳을 바로 출력하고 변동하는 도착 예측은 출력하지 않는다', () => {
     const doc = render(snapshot());
     const steps = Array.from(doc.querySelectorAll('ol > li'));
-    expect(steps.map(step => step.querySelector('h2')?.textContent)).toEqual(['1번 버스', '2번 버스', '걸어가세요']);
-    expect(Array.from(steps[0].querySelectorAll('dt, dd'), cell => cell.textContent)).toEqual([
-      '타는 곳', '출발 정류장', '내리는 곳', '환승 정류장',
+    expect(doc.querySelector('header')?.textContent).toContain('목적지 / 환승 1회');
+    expect(steps).toHaveLength(2);
+    expect(steps.map(step => Array.from(step.querySelectorAll('h2'), title => title.textContent))).toEqual([
+      ['1번 버스', '환승 정류장'], ['2번 버스', '도착 정류장'],
     ]);
+    expect(steps[0].textContent).toMatch(/1\. 이 버스를 타세요.*2\. 여기서 내리세요/);
+    expect(steps[1].textContent).toMatch(/환승 정류장.*3\. 이 버스를 타세요.*4\. 여기서 내리세요/);
     expect(steps[0].textContent).toContain('2개 정류장');
-    expect(Array.from(steps[1].querySelectorAll('dt, dd'), cell => cell.textContent)).toEqual([
-      '타는 곳', '환승 정류장', '내리는 곳', '도착 정류장',
-    ]);
-    expect(Array.from(steps[2].querySelectorAll('dt, dd'), cell => cell.textContent)).toEqual([
-      '출발하는 곳', '도착 정류장', '도착하는 곳', '터미널',
-    ]);
-    expect(steps[2].textContent).not.toMatch(/확인되지 않음|0m|0분/);
+    expect(doc.querySelector('footer')?.textContent).toContain('도착 정류장에서 터미널까지 걸어가세요');
+    expect(doc.querySelector('footer')?.textContent).not.toMatch(/확인되지 않음|0m|0분/);
+    expect(doc.textContent).not.toContain('전 정류장:');
     expect(doc.textContent).not.toMatch(/시연|테스트용|가상 시설|더미 데이터/);
     expect(doc.textContent).not.toMatch(/운행 상태|운행 변경 정보 확인|원천 갱신|서버 수집|카운트다운|자료 출처/);
     expect(doc.textContent).not.toContain('987655');
@@ -77,7 +76,7 @@ describe('고정 인쇄 안내표', () => {
     data.guidance = { routeSnapshotVersion: 'v1', mode: 'template_fallback', steps: [{ segmentId: 'bus-1', text }] };
     const doc = render(data);
     expect(doc.textContent).not.toContain(text);
-    expect(doc.querySelectorAll('ol > li')).toHaveLength(3);
+    expect(doc.querySelectorAll('ol > li')).toHaveLength(2);
     expect(doc.querySelector('article')?.getAttribute('data-route-version')).toBe('v1');
   });
 });
@@ -93,21 +92,37 @@ it('연결 전 운행 상태를 실시간으로 출력하거나 반복 시연 �
 });
 
 
-it('소비자 인쇄표는 이동 안내와 값만 표시하고 메타데이터를 생략한다', () => {
+it('직행 양식에서 실제 하차 직전 정류장과 하차 후 도보 정보를 출력한다', () => {
   const data = snapshot();
   data.routeDetail.originStationId = ORIGIN_STATION_ID;
   const firstBus = data.routeDetail.segments[0];
-  if (firstBus.type === 'bus') firstBus.boardStation = { stationId: ORIGIN_STATION_ID, name: '종합터미널' };
+  if (firstBus.type !== 'bus') throw new Error('첫 구간에 버스가 없습니다.');
+  firstBus.boardStation = { stationId: ORIGIN_STATION_ID, name: '종합터미널' };
+  firstBus.alightStation = { stationId: 'end', name: '병원입구', arsId: '1035' };
+  firstBus.directionLabel = '두정역 방면';
+  const coordinates = { latitude: 36.819, longitude: 127.156 };
+  firstBus.stops = [
+    { ...firstBus.boardStation, sequence: 1, coordinates },
+    { stationId: 'previous', name: '시연 삼거리', arsId: '1034', sequence: 2, coordinates },
+    { ...firstBus.alightStation, sequence: 3, coordinates },
+  ];
+  data.routeDetail.estimatedTravelSeconds = 18 * 60;
   data.routeDetail.routingNotice = '공식 노선 구조 기준 · 평균 이동시간 추정 · 대기시간 제외 · OpenStreetMap contributors';
-  const walk = data.routeDetail.segments.find(segment => segment.type === 'walk')!;
-  if (walk.type === 'walk') { walk.distanceMeters = 170; walk.durationSeconds = 180; }
+  const walk = data.routeDetail.segments.at(-1);
+  if (walk?.type !== 'walk') throw new Error('마지막 구간에 도보가 없습니다.');
+  Object.assign(walk, { fromLabel: '병원입구 정류장', toLabel: '병원', distanceMeters: 170, durationSeconds: 180 });
+  data.routeDetail.segments = [firstBus, walk];
   const before = JSON.stringify(data);
   const host = document.createElement('div');
   host.innerHTML = renderToStaticMarkup(<PrintDocument snapshot={data} originName="종합터미널" destinationName="병원" />);
-  expect(Array.from(host.querySelectorAll('header dt, header dd'), cell => cell.textContent)).toEqual([
-    '출발 정류장', '종합터미널 686', '목적지', '병원',
-  ]);
+  expect(host.querySelector('h1')?.textContent).toBe('병원');
+  expect(host.textContent).toContain('예상 이동시간 18분 (대기 제외)');
+  expect(host.textContent).toContain('출발 정류장종합터미널 (686)두정역 방면');
+  expect(host.textContent).toContain('전 정류장: 삼거리 (1034)');
+  expect(host.textContent).toContain('병원입구 (1035) 정류장에서 병원까지 걸어가세요');
   expect(host.textContent).toContain('도보 170m · 약 3분');
+  expect(host.querySelectorAll('ol > li')).toHaveLength(1);
+  expect(host.textContent).not.toMatch(/환승|3\. 이 버스를 타세요/);
   expect(host.textContent).not.toMatch(/공식 노선|대기시간 제외|OpenStreetMap|원천|서버 수집|카운트다운|확인 불가|출발 정류장은 제외/);
   expect(JSON.stringify(data)).toBe(before);
 });

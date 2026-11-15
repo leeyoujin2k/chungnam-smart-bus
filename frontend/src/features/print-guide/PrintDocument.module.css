@@ -1,45 +1,127 @@
-.document { display: none; }
+.document {
+  position: relative;
+  width: 120mm;
+  height: 297mm;
+  box-sizing: border-box;
+  padding: 8mm 8mm 0;
+  margin: 0 auto;
+  background: #fff;
+  color: #000;
+  font-family: Pretendard, 'Malgun Gothic', sans-serif;
+  font-size: 4mm;
+  font-weight: 500;
+  line-height: 5mm;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
 
-@page { size: A4 portrait; margin: 15mm; }
+@media screen {
+  .document {
+    position: fixed;
+    top: 0;
+    left: 0;
+    transform: translateX(-100%);
+    visibility: hidden;
+    pointer-events: none;
+  }
+}
 
 @media print {
+  @page bus-guide { size: A4 portrait; margin: 0; }
+
   .document {
-    display: block;
-    color: #000;
-    background: #fff;
-    font-family: Pretendard, 'Malgun Gothic', sans-serif;
-    font-size: 10pt;
-    font-weight: 400;
-    line-height: 1.5;
-    word-break: keep-all;
-    overflow-wrap: anywhere;
+    page: bus-guide;
+    overflow: hidden;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
   }
 
-  .header {
-    break-inside: avoid;
-    break-after: avoid;
-    border-bottom: 2pt solid currentColor;
-    padding-bottom: 4mm;
+  .document::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: .3mm solid #000;
+    pointer-events: none;
   }
-  .header h1 { margin: 0 0 3mm; font-size: 10pt; font-weight: 500; }
-  .headline { margin: 0 0 4mm; font-size: 16pt; font-weight: 800; }
-  .journey, .instructions {
-    display: grid;
-    grid-template-columns: 34mm minmax(0, 1fr);
-    align-items: baseline;
-    gap: 1mm 3mm;
-    margin: 0;
-  }
-  .journey dt { font-size: 8pt; }
-  .journey dd, .instructions dd { margin: 0; }
-  .journey dd, .instructions .board { font-size: 17pt; font-weight: 700; }
-  .journey .destination { font-size: 19pt; }
-  .timestamp { margin: 3mm 0 0; font-size: 8pt; font-weight: 300; }
 
-  .steps { margin: 0; padding-inline-start: 10mm; }
-  .steps > li { break-inside: avoid; padding: 4mm 0; }
-  .steps > li + li { border-top: 1pt solid currentColor; }
-  .steps h2 { margin: 0 0 2mm; font-size: 10pt; font-weight: 400; }
-  .steps .bus, .instructions .alight { font-size: 25pt; font-weight: 800; }
-  .steps p { margin: 1.5mm 0 0; font-size: 8pt; }
+  .sheetContent {
+    transform: scale(var(--guide-scale, 1));
+    transform-origin: top center;
+  }
 }
+
+.sheetContent { display: flow-root; }
+
+.document :is(p, h1, h2, ol) { margin: 0; }
+.document :is(h1, h2, strong, small) { font-weight: inherit; }
+.document :is(p, h1, h2, strong, span, small), .brand { letter-spacing: -.02em; }
+
+.header {
+  position: relative;
+  min-height: 54mm;
+  padding-bottom: 4.5mm;
+  text-align: center;
+  break-inside: avoid;
+  break-after: avoid;
+}
+
+.header::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 -.25mm;
+  height: .5mm;
+  background: #e7e7e7;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2mm;
+  font-size: 6mm;
+  line-height: 7mm;
+}
+.brand img { width: 7mm; height: 7mm; object-fit: contain; }
+.header .destinationLabel { margin-top: 12mm; }
+.header h1 { margin-top: 4mm; font-size: 8mm; line-height: 10mm; }
+.header .estimate { margin-top: 4mm; font-size: 5mm; line-height: 7.5mm; color: #4f4f4f; }
+.estimate small { font-size: 4mm; line-height: 1; }
+
+.legs { padding: 0; list-style: none; }
+.leg { break-inside: avoid; }
+.boardingStop { padding: 4mm 0 8mm; }
+.caption { color: #4f4f4f; }
+.boardingStop .boardingPlace {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0 1mm;
+  margin-top: 8mm;
+  font-size: 5mm;
+  line-height: 6mm;
+}
+.boardingPlace span { font-size: 4mm; line-height: 1; }
+
+.busCard, .alightCard {
+  display: grid;
+  align-content: start;
+  gap: 3mm;
+  padding: 4mm;
+  border-radius: 2mm;
+  text-align: center;
+}
+.busCard {
+  min-height: 43mm;
+  background: #fff;
+  box-shadow: inset 0 0 0 .5mm #888;
+}
+.leg + .leg .busCard { box-shadow: inset 0 0 0 .5mm #000; }
+.alightCard {
+  min-height: 27mm;
+  margin-top: 4mm;
+  background: #e7e7e7;
+}
+.major { font-size: 9mm; line-height: 11mm; }
+.ride { color: #6f6f6f; }
+.walk { margin-top: 4mm; break-inside: avoid; text-align: center; }
+.walk p + p { margin-top: 1mm; color: #4f4f4f; }

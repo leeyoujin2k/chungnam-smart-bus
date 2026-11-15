@@ -219,7 +219,11 @@ describe('연결된 키오스크 사용자 흐름', () => {
     await click('음성안내');
     expect(voice.speak).toHaveBeenLastCalledWith('종합터미널 정류장에서 십사번 버스를 타세요. 6개 정류장을 이동한 뒤 순천향병원 정류장에서 내리시면 됩니다.');
     await click('안내표 인쇄하기');
-    expect(host.querySelector('article header')?.textContent).toContain(headline);
+    const guide = host.querySelector('article[aria-label="인쇄용 이동 안내표"]');
+    expect(guide?.querySelector('h1')?.textContent).toBe('단국대학교 천안캠퍼스');
+    expect(Array.from(guide?.querySelectorAll('h2') ?? [], title => title.textContent)).toEqual([
+      '1번 버스', '병원 앞 정류장',
+    ]);
   });
 
   it('현재 정류장 번호를 헤더에 표시하고 이동 순서를 그 정류장에서의 승차로 시작한다', async () => {
@@ -283,15 +287,29 @@ describe('연결된 키오스크 사용자 흐름', () => {
     expect(host.querySelector('[data-theme="contrast"]')).not.toBeNull();
     await reachDetail(); await click('안내표 인쇄하기');
     expect(host.querySelector('article[aria-label="인쇄용 이동 안내표"]')?.textContent).toContain('병원');
-    expect(host.querySelector('main')?.textContent).not.toContain('인쇄 시각');
-    expect(host.querySelector('article[aria-label="인쇄용 이동 안내표"]')?.textContent).toContain('인쇄 시각');
-    const browserPrint = vi.spyOn(window, 'print').mockImplementation(() => undefined);
+    expect(host.querySelector('main')?.textContent).not.toContain('버스 길안내');
+    expect(host.querySelector('article[aria-label="인쇄용 이동 안내표"]')?.textContent).toContain('버스 길안내');
+    const content = host.querySelector<HTMLElement>('article[aria-label="인쇄용 이동 안내표"] > div')!;
+    const measure = vi.spyOn(content, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, 393, 680));
+    const browserPrint = vi.spyOn(window, 'print').mockImplementation(() => {
+      expect(content.style.getPropertyValue('--guide-scale')).toBe('1');
+    });
     await click('출력하기');
     expect(browserPrint).toHaveBeenCalledOnce();
     // Browsers report afterprint on cancellation as well as actual printing.
     await act(async () => { window.dispatchEvent(new Event('afterprint')); });
     expect(heading()).toBe('안내표를 확인해 주세요');
     expect(host.querySelector('main')?.textContent).not.toContain('인쇄가 완료');
+    await click('계속 이용하기');
+    measure.mockReturnValue(new DOMRect(0, 0, 393, 1300));
+    browserPrint.mockImplementationOnce(() => {
+      const scale = Number(content.style.getPropertyValue('--guide-scale'));
+      expect(scale).toBeGreaterThan(0);
+      expect(scale).toBeLessThan(1);
+    });
+    await click('출력하기');
+    expect(browserPrint).toHaveBeenCalledTimes(2);
+    await act(async () => { window.dispatchEvent(new Event('afterprint')); });
     await click('계속 이용하기');
     await click('이전'); await click('이전'); await click('이전'); await click('이전');
     expect(heading()).toBe('어디로 가시나요?');

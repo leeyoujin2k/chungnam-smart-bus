@@ -54,7 +54,7 @@ npm run build
 | `src/shared/api/` | 기존 API 타입, fetch 클라이언트, 시각·품질 표시 |
 | `src/features/destination-search/` | 한글 조합·삭제, 한/영·기호·쌍자음 전환 키보드 |
 | `src/features/voice-guide/` | 브라우저 한국어 음성 재생·중지 |
-| `src/features/print-guide/` | 고정 스냅샷의 A4 인쇄 전용 문서 |
+| `src/features/print-guide/` | 고정 스냅샷을 A4 세로로 출력하는 안내표 |
 | `public/assets/manifest.json` | Figma 원본 자산의 노드·용도·크기 기록 |
 
 시작 → 목적지 분류/검색 → 결과 선택 → 경로 선택 → 상세 안내 → 인쇄 준비 → 브라우저 인쇄 순서로 이동한다. URL별 라우터 대신 한 앱의 메모리 상태를 사용한다. 새로고침하면 선택 상태가 사라지고 시작 화면으로 돌아간다. 사용자 검색 이력은 영구 저장하지 않는다.
