@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from uuid import uuid4
 from contextlib import asynccontextmanager
 from dataclasses import replace
+from mimetypes import add_type
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError, ResponseValidationError
@@ -25,6 +26,13 @@ from backend.config import ROOT
 from backend.services.places import load_places, register_places
 from backend.services.cheonan_routing import CheonanNetwork
 from backend.services.speech import SpeechTranscriber
+
+
+# The deployment entry serves the frontend with Starlette StaticFiles.
+# Use consistent media types even on hosts that classify .mjs as text/plain.
+add_type('text/javascript', '.mjs')
+add_type('application/wasm', '.wasm')
+add_type('application/octet-stream', '.onnx')
 
 
 def create_app(settings=None, clock=None, provider=None, ai_adapter=None, *, place_catalog='legacy', transport_catalog='legacy'):
@@ -67,7 +75,7 @@ def create_app(settings=None, clock=None, provider=None, ai_adapter=None, *, pla
     app.include_router(router)
     if transport is not None:
         app.include_router(cheonan_router)
-        app.state.speech = SpeechTranscriber()
+        app.state.speech = SpeechTranscriber(places or ())
         app.include_router(speech_router)
 
     @app.middleware('http')

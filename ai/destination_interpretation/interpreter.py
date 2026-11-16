@@ -45,6 +45,14 @@ REASON_CODES = {
 
 _NON_WORD = re.compile(r'[^0-9a-z가-힣\s]')
 _SPACES = re.compile(r'\s+')
+_FOREIGN_PLACE = re.compile(
+    r'(?<!\S)(서울|부산|대구|인천|광주|대전|울산|세종|제주|수원|성남|청주|아산|평택|공주|예산|당진|논산|홍성|온양'
+    r'|남대문|동대문|강남|잠실|용산|여의도)'
+    r'(?:특별시|광역시|시|군)?'
+)
+_GENERIC_TERMS = frozenset(term for expressions in CATEGORY_TERMS.values() for term in expressions)
+_FUZZY_SUFFIXES = (*PARTICLES, '요', '까지', '쪽', '근처')
+_PLACE_KIND_ENDINGS = ('시장', '시청', '병원', '터미널', '역')
 
 
 def normalize(text):
@@ -212,6 +220,73 @@ def _match(text, terms, spans):
     return kept, guessed
 
 
+def _foreign_place(text):
+    for match in _FOREIGN_PLACE.finditer(text):
+        rest = compact(text[match.end():])
+        if not any(rest.startswith(particle + negation)
+                   for particle in ('', *PARTICLES) for negation in NEGATIONS):
+            return True
+    return False
+
+
+def _similarity(left, right):
+    if len(left) == len(right):
+        changed = sum(a != b for a, b in zip(left, right))
+        distance = jamo_distance(left, right)
+        budget = 1 if len(right) == 3 else 2
+        if 0 < distance <= budget and changed <= (1 if len(right) < 5 else 2):
+            return distance
+    elif len(right) >= 5 and abs(len(left) - len(right)) == 1:
+        longer, shorter = (left, right) if len(left) > len(right) else (right, left)
+        if any(longer[:i] + longer[i + 1:] == shorter for i in range(len(longer))):
+            return 3
+    return None
+
+
+def _match_local(text, terms, spans):
+    starts = {start for start, _ in spans}
+    ends = {end for _, end in spans}
+    exact = set()
+    for start, end, keys in _hits(text, terms):
+        # A registered label embedded in an unregistered name is not a local destination.
+        if start not in starts:
+            continue
+        if not _negated(text, end):
+            exact.update(keys)
+    if exact:
+        return exact, False
+
+    best = None
+    candidates = set()
+    for term, keys in terms.items():
+        if len(term) < 3 or term in _GENERIC_TERMS or len(keys) > 1:
+            continue
+        term_kind = next((kind for kind in _PLACE_KIND_ENDINGS if term.endswith(kind)), None)
+        for start in starts:
+            for length in (len(term) - 1, len(term), len(term) + 1) if len(term) >= 5 else (len(term),):
+                end = start + length
+                if end > len(text) or _negated(text, end):
+                    continue
+                if end not in ends and not text.startswith(_FUZZY_SUFFIXES, end):
+                    continue
+                fragment = text[start:end]
+                if not all('가' <= char <= '힣' for char in fragment + term):
+                    continue
+                distance = _similarity(fragment, term)
+                if distance is None:
+                    continue
+                # Don't turn a recognizable place type into another one (천안시장 → 천안시청).
+                fragment_kind = next((kind for kind in _PLACE_KIND_ENDINGS if fragment.endswith(kind)), None)
+                if term_kind and fragment_kind and term_kind != fragment_kind:
+                    continue
+                rank = distance, -len(term)
+                if best is None or rank < best:
+                    best, candidates = rank, set(keys)
+                elif rank == best:
+                    candidates.update(keys)
+    return candidates, bool(candidates)
+
+
 def interpret(payload):
     try:
         if type(payload) is not dict:
@@ -220,8 +295,12 @@ def interpret(payload):
         destinations = _valid_destinations(payload.get('allowedDestinations'))
         if type(text) is not str or not text.strip() or len(text) > MAX_TEXT_LENGTH or destinations is None:
             return result('unavailable')
-        matched, fuzzy = _match(compact(text), _terms(destinations), _word_spans(text))
-        word_guessed = _word_guesses(text, destinations) - matched
+        cheonan = bool(destinations) and all(item['destinationId'].startswith('cheonan-') for item in destinations)
+        if cheonan and _foreign_place(normalize(text)):
+            return result('no_match')
+        match = _match_local if cheonan else _match
+        matched, fuzzy = match(compact(text), _terms(destinations), _word_spans(text))
+        word_guessed = _word_guesses(text, destinations) - matched if not cheonan or not matched else set()
         if word_guessed:
             matched, fuzzy = matched | word_guessed, True
         # allowedDestinations 순서를 유지해 같은 입력에 같은 출력을 낸다.

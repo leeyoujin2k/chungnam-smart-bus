@@ -34,7 +34,8 @@ PREFERENCE_PATTERNS = {
 }
 
 # 조건 표현 바로 뒤에 오면 그 조건을 원하지 않는다는 뜻('빨리 안 가도 돼요', '급하지 않아요').
-NEGATED_AFTER = ('안가도', '안와도', '않아도', '안해도', '지않', '지는않', '진않', '않', '없어도', '아니')
+NEGATED_AFTER = ('안가도', '안와도', '않아도', '안해도', '지않', '지는않', '진않', '않', '없어도',
+                 '아니', '고싶지않', '고싶진않', '고싶은건아니')
 
 _COMPILED = {sort: [re.compile(p) for p in patterns] for sort, patterns in PREFERENCE_PATTERNS.items()}
 
@@ -52,11 +53,17 @@ def _word_spans(text):
 def find_preferences(text):
     """[(시작, 끝, sort, 표현)] 말한 순서대로. 부정된 표현은 뺀다."""
     flat = interpreter.compact(text)
+    word_starts = {start for _, start, _ in _word_spans(text)}
     found = []
     for sort, patterns in _COMPILED.items():
         for pattern in patterns:
             for m in pattern.finditer(flat):
                 if flat[m.end():].startswith(NEGATED_AFTER):
+                    continue
+                if sort == 'fastest' and (
+                    (m.start() - 1 in word_starts and flat[m.start() - 1] == '안') or
+                    (m.group().endswith('없') and flat[m.end():].startswith('어도'))
+                ):
                     continue
                 found.append((m.start(), m.end(), sort, m.group()))
     found.sort()

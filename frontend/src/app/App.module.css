@@ -67,14 +67,12 @@
 .speechPrompt > .voiceExamples { padding-top:3.704cqw; }
 .speechPrompt > p:not(:empty) + .voiceExamples { padding-top:1cqw; }
 .destinationMic { min-height:15.556cqw; font-size:5.556cqw; gap:2cqw; }
-.destinationMic[data-listening=true] { background:#a8a8a8; color:#fff; opacity:1; }
-.high .destinationMic[data-listening=true] { background:#454545; color:var(--text); border:1px solid currentColor; }
+.speechActions { display:grid; grid-auto-flow:column; grid-auto-columns:1fr; gap:2cqw; }
 .voiceConfirmation { text-align:center; }
 .confirmationPin { margin:6cqw auto 0; }
 .voiceConfirmation p { min-height:12cqw; margin:2cqw auto 0; font-size:4.63cqw; line-height:1.45; word-break:keep-all; }
-.voiceConfirmation strong { color:#155abd; }
-.high .voiceConfirmation strong { color:var(--text); }
-.voiceConfirmation .actions { margin-top:9cqw; }
+.voiceConfirmation .actions { margin-top:4cqw; }
+.voiceConfirmation .helperButton { margin-top:2cqw; }
 .helperButton { min-height:max(44px, 10cqw); padding:1.5cqw 2.5cqw; border:1px solid var(--control-border); border-radius:1.852cqw; background:var(--surface); color:var(--text); font-size:max(15px, 3.704cqw); font-weight:600; line-height:1.4; word-break:keep-all; }
 .helperButton:disabled { opacity:.5; }
 .micIcon { width:1.15em; height:1.15em; flex-shrink:0; }

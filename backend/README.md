@@ -20,7 +20,9 @@ backend/.venv/Scripts/python -m pip install -r backend/requirements-speech.txt
 backend/.venv/Scripts/hf.exe download Systran/faster-whisper-small config.json model.bin tokenizer.json vocabulary.txt --revision 536b0662742c02347bc0e980a01041f333bce120 --local-dir backend/.local/speech-model
 ```
 
-마이크 입력은 로컬 주소(`localhost` 또는 `127.0.0.1`)나 HTTPS 화면에서 허용한다. `말하기`를 한 번 누르면 9초 동안 녹음한 뒤 자동으로 인식한다. 로컬 모델이 준비되지 않은 경우 지원되는 브라우저에서는 브라우저 음성 인식으로 다시 듣는다.
+마이크 입력은 로컬 주소(`localhost` 또는 `127.0.0.1`)나 HTTPS 화면에서 허용한다. 말소리가 시작된 뒤 약 1.8초간 말소리가 없으면 녹음 한 건을 서버로 보낸다. VAD가 준비된 뒤 7.5초 동안 발화가 없으면 재시도를 안내하고, 녹음은 최대 14초다. 서버는 인코딩 여유를 포함해 디코딩된 오디오 최대 15초와 요청 본문 최대 2 MiB를 허용한다. VAD가 로드되지 않으면 ‘말하기 끝내기’ 버튼으로 서버 인식을 이용할 수 있다. 서버 인식이 불가능하면 지원 브라우저에서는 한 번 더 말해 달라고 안내한 뒤 브라우저의 한국어 인식을 사용한다.
+
+서버 기본값은 Whisper Small, CPU `int8`, 4스레드, `beam_size=1`이다. `BUS_SPEECH_MODEL_PATH`로 로컬에 설치한 faster-whisper 모델 디렉터리, `BUS_SPEECH_CPU_THREADS`와 `BUS_SPEECH_BEAM_SIZE`로 양의 정수 값을 지정할 수 있다. 등록된 천안 목적지와 일부 별칭을 인식 힌트로 사용하며, `BUS_SPEECH_HOTWORDS=0`으로 끌 수 있다.
 
 명령은 프로젝트 루트에서 실행한다. 검증 환경은 Windows, Python **3.13.2**, FastAPI **0.115.5**, Uvicorn **0.32.0**, Pydantic **2.9.2**, SQLAlchemy **2.0.36**, HTTPX **0.27.2**, pytest **8.3.3**이다. SQLite는 Python 내장 라이브러리이며 실제 버전은 `docs/runtime-versions.json`에 기록한다. 전체 간접 의존성까지 `requirements.lock`에 고정했다. 규칙 기반 AI 모듈은 표준 라이브러리만 사용한다.
 

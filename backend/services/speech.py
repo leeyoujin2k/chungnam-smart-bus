@@ -1,5 +1,7 @@
 from importlib.util import find_spec
 from io import BytesIO
+from os import getenv
+from pathlib import Path
 from threading import Lock
 
 from backend.api.errors import ServiceError
@@ -9,11 +11,38 @@ from backend.config import ROOT
 MODEL_PATH = ROOT / '.local/speech-model'
 MODEL_FILES = ('config.json', 'model.bin', 'tokenizer.json', 'vocabulary.txt')
 SAMPLE_RATE = 16_000
-MAX_SAMPLES = 12 * SAMPLE_RATE
+MAX_SAMPLES = 15 * SAMPLE_RATE
+MAX_TRANSCRIPTION_TOKENS = 128
+MAX_COMPRESSION_RATIO = 2.4
+HINT_DESTINATIONS = (
+    'cheonan-station', 'cheonan-central-market', 'cheonan-dankook-hospital',
+    'cheonan-dankook-university', 'cheonan-city-hall', 'cheonan-bus-terminal',
+    'cheonan-independence-hall', 'cheonan-soonchunhyang-hospital',
+)
+
+
+def catalogue_hotwords(places):
+    by_id = {place['destinationId']: place for place in places}
+    words = []
+    for destination_id in HINT_DESTINATIONS:
+        place = by_id.get(destination_id)
+        if not place:
+            continue
+        words.append(place['name'])
+        aliases = [alias for alias in place.get('aliases', [])
+                   if 3 <= len(alias.replace(' ', '')) < len(place['name'])
+                   and alias.replace(' ', '') != place['name'].replace(' ', '')]
+        if aliases:
+            words.append(min(aliases, key=len))
+    return ', '.join(dict.fromkeys(words)) or None
 
 
 class SpeechTranscriber:
-    def __init__(self):
+    def __init__(self, places=()):
+        self.model_path = Path(getenv('BUS_SPEECH_MODEL_PATH', str(MODEL_PATH)))
+        self.cpu_threads = int(getenv('BUS_SPEECH_CPU_THREADS', '4'))
+        self.beam_size = int(getenv('BUS_SPEECH_BEAM_SIZE', '1'))
+        self.hotwords = catalogue_hotwords(places) if getenv('BUS_SPEECH_HOTWORDS', '1') == '1' else None
         self.model = None
         self._lock = Lock()
 
@@ -27,7 +56,7 @@ class SpeechTranscriber:
 
     def _transcribe(self, recording, audio_format):
         if self.model is None and (find_spec('faster_whisper') is None or
-                                   not all((MODEL_PATH / name).is_file() for name in MODEL_FILES)):
+                                   not all((self.model_path / name).is_file() for name in MODEL_FILES)):
             raise ServiceError(503, 'SPEECH_UNAVAILABLE', '음성 인식이 준비되지 않았어요. 다시 말하거나 글로 입력해 주세요.', True)
 
         import av
@@ -54,8 +83,14 @@ class SpeechTranscriber:
         if self.model is None:
             from faster_whisper import WhisperModel
 
-            self.model = WhisperModel(str(MODEL_PATH), device='cpu', compute_type='int8', cpu_threads=4, local_files_only=True)
+            self.model = WhisperModel(str(self.model_path), device='cpu', compute_type='int8',
+                                      cpu_threads=self.cpu_threads, local_files_only=True)
         waveform = np.concatenate(chunks).astype(np.float32) / 32768
-        segments, _ = self.model.transcribe(waveform, language='ko', vad_filter=True, beam_size=1,
-                                             condition_on_previous_text=False, temperature=0.0)
-        return ' '.join(segment.text.strip() for segment in segments).strip()[:200]
+        segments, _ = self.model.transcribe(
+            waveform, language='ko', vad_filter=True, beam_size=self.beam_size,
+            condition_on_previous_text=False, temperature=0.0, hotwords=self.hotwords,
+            max_new_tokens=MAX_TRANSCRIPTION_TOKENS, compression_ratio_threshold=MAX_COMPRESSION_RATIO,
+        )
+        # With a single decoding temperature Whisper can return a segment it marked too repetitive.
+        return ' '.join(segment.text.strip() for segment in segments
+                        if segment.compression_ratio <= MAX_COMPRESSION_RATIO).strip()[:200]

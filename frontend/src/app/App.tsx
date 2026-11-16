@@ -136,6 +136,7 @@ export function App() {
   const [state, dispatch] = useReducer(reducer, initialState);
   const [query, setQuery] = useState('');
   const [assistantText, setAssistantText] = useState('');
+  const [assistantTranscript, setAssistantTranscript] = useState('');
   const [conversation, setConversation] = useState<ConversationData | null>(null);
   const routePreference = state.assistant ? conversation?.sort : null;
   const [listening, setListening] = useState(false);
@@ -163,7 +164,7 @@ export function App() {
   const invalidate = useCallback((message: string) => { request.current?.abort(); clearPrintListener(); voice.stop(); dispatch({ type: 'invalidate', message }); }, [clearPrintListener, voice.stop]);
   const reset = useCallback(() => {
     request.current?.abort(); clearPrintListener(); voice.stop();
-    setQuery(''); setAssistantText(''); setConversation(null); setListening(false);
+    setQuery(''); setAssistantText(''); setAssistantTranscript(''); setConversation(null); setListening(false);
     setShowAssistantKeyboard(false); setShowOtherRoutes(false); setIdle(null);
     activity.current = Date.now(); dispatch({ type: 'reset' });
   }, [clearPrintListener, voice.stop]);
@@ -294,8 +295,13 @@ export function App() {
   }
   function restartAssistant() {
     editAssistant('');
+    setAssistantTranscript('');
     setListening(false);
     setShowAssistantKeyboard(false);
+  }
+  function editRecognizedText() {
+    setConversation(null);
+    setShowAssistantKeyboard(true);
   }
   function confirmDestination(destination: Destination) {
     setShowOtherRoutes(false);
@@ -372,6 +378,9 @@ export function App() {
   const preferenceSort = assistantSorts.find(([value]) => value === routePreference && value !== 'transfers');
   const confirmationSubtitle = routePreference ? 'AI가 경로를 추천해 드려요.' : '목적지를 확인하면 이용할 수 있는 경로를 보여 드려요.';
   const confirmedCandidate = conversation?.candidates.length === 1 ? conversation.candidates[0] : undefined;
+  const confirmedName = confirmedCandidate ? displayText(confirmedCandidate.name) : '';
+  const lastSyllable = confirmedName.charCodeAt(confirmedName.length - 1) - 0xac00;
+  const confirmationQuestion = `${confirmedName}${lastSyllable >= 0 && lastSyllable < 11172 && lastSyllable % 28 === 0 ? '가' : '이'} 맞나요?`;
   const walkingDistance = state.destination?.walkingDistanceMeters;
   const printPending = state.screen === 'print' && state.busy;
   const step = state.screen === 'routes' ? 1 : state.screen === 'detail' ? 2 : state.screen === 'print' ? 3 : 0;
@@ -399,6 +408,7 @@ export function App() {
   const originCode = !state.station || state.station.stationId === ORIGIN_STATION_ID ? ORIGIN_PUBLIC_CODE : null;
 
   function toggleVoice() {
+    if (listening) return;
     setShowVoice(true);
     if (voice.speaking) voice.stop();
     else voice.speak(displayText(spokenText));
@@ -429,12 +439,13 @@ export function App() {
           </div>
         </>}
         {state.screen === 'assistant' && (conversation ? <>
-          <Heading title={confirmedCandidate ? '이 장소가 맞나요?' : conversation.candidates.length ? '어디로 가시나요?' : '목적지를 확인해 주세요.'}
+          <Heading title={confirmedCandidate ? confirmationQuestion : conversation.candidates.length ? '어디로 가시나요?' : '목적지를 확인해 주세요.'}
             subtitle={conversation.candidates.length ? confirmationSubtitle : '장소 이름을 바꿔 다시 찾아보세요.'} />
           <section className={s.voiceConfirmation} aria-label="목적지 확인">
             <img src="/assets/voice-location-pin.png" alt="" className={s.confirmationPin} />
+            <p>{assistantTranscript ? '인식한 문장' : '입력한 문장'}<br />“{assistantTranscript || assistantText}”</p>
+            {assistantTranscript && assistantTranscript !== assistantText && <p>수정한 문장<br />“{assistantText}”</p>}
             {confirmedCandidate ? <>
-              <p><strong>{displayText(confirmedCandidate.name)}</strong><br />“{assistantText}”</p>
               <div className={s.actions}>
                 <Primary secondary disabled={state.busy} onClick={restartAssistant}>아니에요</Primary>
                 <Primary disabled={state.busy} onClick={() => confirmDestination(confirmedCandidate)}>맞아요</Primary>
@@ -448,17 +459,18 @@ export function App() {
                 <Primary secondary disabled={state.busy} onClick={restartAssistant}>다시 입력하기</Primary>
               </div>
             </>}
+            <button type="button" className={s.helperButton} disabled={state.busy} onClick={editRecognizedText}>문장 수정하기</button>
           </section>
         </> : <>
           <Heading title="말로 목적지 찾기" subtitle={<>가고 싶은 곳을 말씀해 주세요.<br />원하는 조건도 함께 말씀하실 수 있어요.</>} />
           <div className={s.voiceControls}>
             <img src="/assets/voice-microphone.png" alt="" className={s.voiceArt} />
             <SpeechInput disabled={state.busy || idle !== null} onListen={voice.stop}
-              onListeningChange={setListening} onText={searchAssistant}>
+              onListeningChange={setListening} onText={text => { setAssistantTranscript(text); searchAssistant(text); }}>
               <div className={s.voiceExamples} aria-label="예시로 검색">
                 <p>아래 버튼을 누른 후 이렇게 말씀해 보세요.</p>
                 {assistantExamples.map(text => <button key={text} type="button" disabled={state.busy}
-                  onClick={() => searchAssistant(text)}>“{text}”</button>)}
+                  onClick={() => { setAssistantTranscript(''); searchAssistant(text); }}>“{text}”</button>)}
               </div>
             </SpeechInput>
             {!listening && <button type="button" className={s.helperButton} disabled={state.busy}

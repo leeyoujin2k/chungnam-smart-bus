@@ -188,7 +188,16 @@
       {"id": "u17", "set": "cheonan", "text": "버스 정류장 어디예요", "status": "no_match", "ids": [], "sort": null},
       {"id": "u18", "set": "cheonan", "text": "남산 중앙시장 걷는 거 힘들어", "status": "matched", "ids": ["cheonan-central-market"], "sort": "walking"},
       {"id": "u19", "set": "cheonan", "text": "병원 말고 시장 빨리", "status": "needs_confirmation", "ids": ["cheonan-central-market", "cheonan-seongjeong-market", "cheonan-byeongcheon-market"], "sort": "fastest"},
-      {"id": "u20", "set": "cheonan", "text": "바쁜데 천안 시청", "status": "matched", "ids": ["cheonan-city-hall"], "sort": "fastest"}
+      {"id": "u20", "set": "cheonan", "text": "바쁜데 천안 시청", "status": "matched", "ids": ["cheonan-city-hall"], "sort": "fastest"},
+      {"id": "u21", "set": "cheonan", "text": "중앙 시잠 가고 싶어요. 많이 안 걷고 싶어요", "status": "needs_confirmation", "ids": ["cheonan-central-market"], "sort": "walking"},
+      {"id": "u22", "set": "cheonan", "text": "서울 중앙시장으로 빨리 가고 싶어요", "status": "no_match", "ids": [], "sort": "fastest"},
+      {"id": "u23", "set": "cheonan", "text": "남대문시장에 가고 싶어요", "status": "no_match", "ids": [], "sort": null},
+      {"id": "u24", "set": "cheonan", "text": "천안역에 안 빨리 가도 돼요. 갈아타기 싫어요", "status": "matched", "ids": ["cheonan-station"], "sort": "transfers"},
+      {"id": "u25", "set": "cheonan", "text": "중앙시장 많이 안 걷고 싶지 않아요", "status": "matched", "ids": ["cheonan-central-market"], "sort": null},
+      {"id": "u26", "set": "cheonan", "text": "벙원", "status": "no_match", "ids": [], "sort": null},
+      {"id": "u27", "set": "cheonan", "text": "중앙시장 빨리 가고 싶고 많이 안 걷고 싶어요", "status": "matched", "ids": ["cheonan-central-market"], "sort": "fastest"},
+      {"id": "u28", "set": "cheonan", "text": "남대문 시장으로 가고 싶어요", "status": "no_match", "ids": [], "sort": null},
+      {"id": "u29", "set": "cheonan", "text": "천안시장 가고 싶어요. 많이 안 걷고 싶어요.", "status": "no_match", "ids": [], "sort": "walking"}
     ],
     "clarify": [
       {"id": "c01", "candidateIds": ["cheonan-bus-terminal", "cheonan-express-terminal"], "question": "천안종합버스터미널과 천안고속버스터미널 중 어디로 가시나요?"},

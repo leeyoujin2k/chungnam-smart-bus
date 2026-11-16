@@ -18,6 +18,17 @@ vi.mock('../shared/api/client', async importOriginal => {
 });
 const voice = vi.hoisted(() => ({ supported: true, speaking: false, message: '', speak: vi.fn(), stop: vi.fn() }));
 vi.mock('../features/voice-guide/useVoiceGuide', () => ({ useVoiceGuide: () => voice }));
+const vad = vi.hoisted(() => ({
+  ready: () => {}, speech: () => {}, end: () => {}, destroy: vi.fn(),
+}));
+vi.mock('@ricky0123/vad-web', () => ({ MicVAD: { new: async (options: {
+  onFrameProcessed: () => void; onSpeechRealStart: () => void; onSpeechEnd: () => void;
+}) => {
+  vad.ready = options.onFrameProcessed;
+  vad.speech = options.onSpeechRealStart;
+  vad.end = options.onSpeechEnd;
+  return { start: async () => vad.ready(), destroy: vad.destroy };
+} } }));
 
 const NOW = '2026-11-10T04:00:00Z';
 const quality: Quality = { sourceId: 'demo-fixture', sourceUpdatedAt: null, fetchedAt: NOW, freshness: 'unknown' };
@@ -94,15 +105,23 @@ afterEach(async () => {
 describe('연결된 키오스크 사용자 흐름', () => {
   it('조건 없이 말한 목적지를 확인한 뒤 전체 경로 목록을 바로 연다', async () => {
     const stopTrack = vi.fn();
-    const getUserMedia = vi.fn(async () => ({ getTracks: () => [{ stop: stopTrack }] }));
+    const stopFilteredTrack = vi.fn();
+    const microphone = { getTracks: () => [{ stop: stopTrack }] };
+    const filtered = { getTracks: () => [{ stop: stopFilteredTrack }] };
+    const recordFrom = vi.fn();
+    const getUserMedia = vi.fn(async () => microphone);
     const mediaDevices = Object.getOwnPropertyDescriptor(navigator, 'mediaDevices');
-    Object.defineProperty(navigator, 'mediaDevices', { configurable: true, value: { getUserMedia } });
+    Object.defineProperty(navigator, 'mediaDevices', { configurable: true, value: {
+      getUserMedia,
+      getSupportedConstraints: () => ({ echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: true }),
+    } });
     class TestRecorder {
       static isTypeSupported = () => true;
       state = 'inactive';
       mimeType = 'audio/webm;codecs=opus';
       ondataavailable?: (event: { data: Blob }) => void;
       onstop?: () => void;
+      constructor(stream: MediaStream) { recordFrom(stream); }
       start() { this.state = 'recording'; }
       stop() {
         this.state = 'inactive';
@@ -111,6 +130,15 @@ describe('연결된 키오스크 사용자 흐름', () => {
       }
     }
     vi.stubGlobal('MediaRecorder', TestRecorder);
+    vi.stubGlobal('AudioContext', class {
+      state = 'running';
+      audioWorklet = { addModule: async () => {} };
+      createMediaStreamSource() { return { connect() {} }; }
+      createBiquadFilter() { return { frequency: { value: 0 }, Q: { value: 0 }, connect() {} }; }
+      createMediaStreamDestination() { return { stream: filtered, channelCount: 2 }; }
+      async resume() {}
+      async close() { this.state = 'closed'; }
+    });
     const transcript = '중앙시장 가고 싶어요';
     vi.mocked(api.transcribe).mockResolvedValue(envelope({ text: transcript }));
     vi.mocked(api.understand).mockResolvedValue(envelope({
@@ -123,15 +151,22 @@ describe('연결된 키오스크 사용자 흐름', () => {
       await mount();
       await click('말로 찾기');
       await click('말하기');
-      await act(async () => { await vi.advanceTimersByTimeAsync(3000); });
-      expect(button('듣고 있어요').disabled).toBe(true);
+      await act(async () => { await vi.dynamicImportSettled(); });
+      expect(host.querySelector('p[role="status"]')?.textContent).toBe('마이크 가까이에서 말씀해 주세요.');
       expect(api.transcribe).not.toHaveBeenCalled();
-      await act(async () => { await vi.advanceTimersByTimeAsync(6000); });
-      expect(getUserMedia).toHaveBeenCalledWith({ audio: true });
+      await act(async () => { vad.speech(); });
+      expect(host.querySelector('p[role="status"]')?.textContent).toContain('듣고 있어요.');
+      await act(async () => { vad.end(); vad.end(); });
+      expect(getUserMedia).toHaveBeenCalledExactlyOnceWith({ audio: {
+        echoCancellation: { ideal: true }, noiseSuppression: { ideal: true },
+        autoGainControl: { ideal: true }, channelCount: { ideal: 1 },
+      } });
+      expect(recordFrom).toHaveBeenCalledExactlyOnceWith(filtered);
       expect(stopTrack).toHaveBeenCalledOnce();
-      expect(api.transcribe).toHaveBeenCalledWith(expect.objectContaining({ type: 'audio/webm;codecs=opus' }), expect.any(AbortSignal));
+      expect(stopFilteredTrack).toHaveBeenCalledOnce();
+      expect(api.transcribe).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ type: 'audio/webm;codecs=opus' }), expect.any(AbortSignal));
       expect(api.understand).toHaveBeenCalledWith(ORIGIN_STATION_ID, transcript, expect.any(AbortSignal));
-      expect(heading()).toBe('이 장소가 맞나요?');
+      expect(heading()).toBe('병원이 맞나요?');
       await click('맞아요');
       expect(api.search).toHaveBeenCalledWith(ORIGIN_STATION_ID, destination.destinationId, expect.any(AbortSignal), 'transfers');
       expect(heading()).toBe('다른 경로도 확인해 보세요');
@@ -140,7 +175,7 @@ describe('연결된 키오스크 사용자 흐름', () => {
       expect(button('최소 대기')).toBeDefined();
       expect(button('최단 거리')).toBeDefined();
       await click('이전');
-      expect(heading()).toBe('이 장소가 맞나요?');
+      expect(heading()).toBe('병원이 맞나요?');
     } finally {
       if (mediaDevices) Object.defineProperty(navigator, 'mediaDevices', mediaDevices);
       else Reflect.deleteProperty(navigator, 'mediaDevices');
@@ -170,7 +205,7 @@ describe('연결된 키오스크 사용자 흐름', () => {
       firstAttempt.onerror?.({ error: 'no-speech' });
       firstAttempt.onend?.();
     });
-    expect(button('듣고 있어요').disabled).toBe(true);
+    expect(button('취소')).toBeDefined();
     await act(async () => { await vi.advanceTimersByTimeAsync(150); });
     expect(TestRecognition.current).not.toBe(firstAttempt);
     const transcript = '터미널 가고 싶어요';
@@ -179,6 +214,8 @@ describe('연결된 키오스크 사용자 흐름', () => {
       TestRecognition.current.onend?.();
     });
     expect(api.understand).toHaveBeenCalledWith(ORIGIN_STATION_ID, transcript, expect.any(AbortSignal));
+    await click('문장 수정하기');
+    expect(host.querySelector<HTMLInputElement>('input[aria-label="목적지와 이동 조건"]')?.value).toBe(transcript);
   });
 
   it('AI 목적지의 이동 조건과 하단 음성안내, 인쇄 요약을 이어준다', async () => {
@@ -206,7 +243,7 @@ describe('연결된 키오스크 사용자 흐름', () => {
     await mount();
     await click('말로 찾기');
     await click('“' + text + '”');
-    expect(heading()).toBe('이 장소가 맞나요?');
+    expect(heading()).toBe('단국대학교 천안캠퍼스가 맞나요?');
     await click('맞아요');
     expect(api.search).toHaveBeenCalledWith(ORIGIN_STATION_ID, campus.destinationId, expect.any(AbortSignal), 'walking', true);
     expect(heading()).toBe('조건에 맞는 경로를 찾았어요');
