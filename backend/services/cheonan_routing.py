@@ -8,7 +8,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from functools import lru_cache
 import json
-from math import cos, radians
+from math import cos, isfinite, radians
 from pathlib import Path
 from uuid import uuid4
 
@@ -33,6 +33,8 @@ OPPOSITE_TERMINAL_SIDE = {'285000685': '285000686', '285000686': '285000685'}
 RETURN_RADIUS_METERS = 180
 DEPARTURE_RADIUS_METERS = 450
 CORRIDOR_RADIUS_METERS = 110
+ESTIMATED_BUS_SPEED_KMH = 25
+ESTIMATED_STOP_SECONDS = 20
 
 
 def total(values):
@@ -242,6 +244,34 @@ class CheonanNetwork:
             boardStation=self.ref(route['stops'][board]), alightStation=self.ref(route['stops'][alight]),
             boardSequence=board+1, alightSequence=alight+1, stopCount=alight-board,
             durationSeconds=duration, distanceMeters=distance)
+
+    def timetable_stop_offset(self, route_id: str, board_sequence: int, stop_id: str) -> tuple[str, int] | None:
+        """Return the starting stop name and travel seconds to the boarding occurrence."""
+        route = self.routes.get(route_id)
+        board = board_sequence - 1
+        if route is None:
+            return None
+        stops = route['stops']
+        if not 0 <= board < len(stops) - 1 or stops[board] != stop_id:
+            return None
+        start_name = self.stations[stops[0]]['name']
+        if board == 0:
+            return start_name, 0
+
+        approach = self.bus(route_id, 0, board, 'timetable-approach')
+        if approach.durationSeconds:
+            return start_name, approach.durationSeconds
+
+        # Approximate the route length with adjacent stop distances when the line cannot be matched.
+        distances = [self.stop_distance(first, second) for first, second in zip(stops, stops[1:])]
+        partial_distance = sum(distances[:board])
+        full_distance = sum(distances)
+        average = route.get('averageDurationMinutes')
+        if partial_distance > 0 and type(average) in (int, float) and isfinite(average) and average > 0:
+            return start_name, max(1, round(average * 60 * partial_distance / full_distance))
+
+        distance = approach.distanceMeters or partial_distance
+        return start_name, round(distance * 3.6 / ESTIMATED_BUS_SPEED_KMH + board * ESTIMATED_STOP_SECONDS)
 
     def detailed_bus(self, route_id, board, alight, identity):
         bus = self.bus(route_id, board, alight, identity)

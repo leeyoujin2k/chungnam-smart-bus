@@ -1,4 +1,4 @@
-from sqlalchemy import CheckConstraint, ForeignKey, ForeignKeyConstraint, JSON, String
+from sqlalchemy import CheckConstraint, ForeignKey, ForeignKeyConstraint, Index, JSON, String
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -83,3 +83,14 @@ class RouteSearch(Base):
     expires_at: Mapped[float]
     data_mode: Mapped[str] = mapped_column(String)
     snapshot: Mapped[dict] = mapped_column(JSON)
+
+
+class BusPassage(Base):
+    __tablename__ = 'bus_passages'
+    route_id: Mapped[str] = mapped_column(primary_key=True)
+    direction: Mapped[str] = mapped_column(primary_key=True)
+    station_id: Mapped[str] = mapped_column(primary_key=True)
+    sequence: Mapped[int] = mapped_column(primary_key=True)
+    passed_at: Mapped[float] = mapped_column(primary_key=True)
+    vehicle_id: Mapped[str] = mapped_column(primary_key=True)
+    __table_args__ = (Index('ix_bus_passages_passed_at', 'passed_at'),)

@@ -21,6 +21,8 @@ class ArrivalObservation:
     source_updated_at: datetime | None = None
     fetched_at: datetime | None = None
     source_id: str | None = None
+    vehicle_id: str | None = None
+    range_end_at: datetime | None = None
 
 
 @dataclass(frozen=True)
@@ -72,6 +74,7 @@ def read_provider(provider, now):
                     and (observation.source_id is None or isinstance(observation.source_id, str))):
                 continue
             arrivals[key] = replace(observation, expected_arrival_at=aware_time(observation.expected_arrival_at),
+                range_end_at=aware_time(observation.range_end_at),
                 operation_status=observation.operation_status if observation.operation_status in
                     ('running', 'not_running', 'unknown') else 'unknown',
                 source_updated_at=aware_time(observation.source_updated_at), fetched_at=aware_time(observation.fetched_at))

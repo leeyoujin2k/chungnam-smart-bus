@@ -145,6 +145,7 @@ def arrival_values(detail, state, now, for_print=False):
             boardStationId=segment.boardStation.stationId, arrivalStatus='available' if available else 'unavailable',
             etaSeconds=max(0, int((expected - now).total_seconds())) if available and not for_print else None,
             expectedArrivalAt=expected if available else None,
+            expectedArrivalRangeEndAt=observation.range_end_at if available and not for_print else None,
             operationStatus=observation.operation_status, dataQuality=q))
     return arrivals
 

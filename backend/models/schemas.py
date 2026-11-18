@@ -218,6 +218,7 @@ class Arrival(Model):
     arrivalStatus: Literal['available', 'unavailable']
     etaSeconds: Nonnegative | None
     expectedArrivalAt: AwareDatetime | None
+    expectedArrivalRangeEndAt: AwareDatetime | None = None
     operationStatus: Literal['running', 'not_running', 'unknown']
     dataQuality: Quality
 

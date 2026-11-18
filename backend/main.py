@@ -18,6 +18,8 @@ from backend.api.errors import ServiceError
 from backend.config import Settings
 from backend.database import Database
 from backend.integrations.ai import AIBoundary
+from backend.integrations.cheonan_history import CheonanArrivalHistory
+from backend.integrations.cheonan_timetables import CheonanTimetables
 from backend.integrations.providers import DemoProvider, UnconnectedLiveProvider, StaticReferenceProvider
 from backend.seed import seed
 from backend.api.routes import cheonan_router, router
@@ -75,6 +77,8 @@ def create_app(settings=None, clock=None, provider=None, ai_adapter=None, *, pla
     app.include_router(router)
     if transport is not None:
         app.include_router(cheonan_router)
+        app.state.timetables = CheonanTimetables(transport)
+        app.state.arrival_history = CheonanArrivalHistory(database, transport)
         app.state.speech = SpeechTranscriber(places or ())
         app.include_router(speech_router)
 

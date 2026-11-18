@@ -1,6 +1,7 @@
 import type { Arrival, Freshness, Quality, StationRef } from './types';
 
 export const UNKNOWN = '확인되지 않음';
+export const NO_ARRIVAL = '도착 정보 없음';
 
 function parsed(value: string | null | undefined): Date | null {
   if (!value) return null;
@@ -50,38 +51,43 @@ export function effectiveFreshness(quality: Quality, now = Date.now()): Freshnes
   return now - source.getTime() > 90_000 ? 'stale' : 'fresh';
 }
 
-export function arrivalLabel(arrival: Arrival, now = Date.now()): string {
-  if (arrival.arrivalStatus !== 'available' || arrival.etaSeconds == null) return '도착 정보 확인 불가';
-  const freshness = effectiveFreshness(arrival.dataQuality, now);
-  if (freshness === 'stale') return '오래된 도착 정보';
-  if (freshness === 'unknown') return '도착 정보 갱신 시각 확인 불가';
-  return `${formatDuration(arrival.etaSeconds)} 후 도착 예정`;
-}
-
 export function currentArrival(arrival: Arrival | undefined, now = Date.now()) {
   if (!arrival) return null;
   const freshness = effectiveFreshness(arrival.dataQuality, now);
-  const fetched = parsed(arrival.dataQuality.fetchedAt);
-  const age = fetched ? now - fetched.getTime() : Infinity;
-  const recentQuery = arrival.dataQuality.sourceId === 'cheonan-bis-arrival'
-    && freshness !== 'stale' && age >= 0 && age < 90_000;
-  const queriedAt = arrival.dataQuality.fetchedAt;
+  const source = arrival.dataQuality.sourceId;
   if (arrival.operationStatus === 'not_running') {
-    const label = '운행하지 않아요';
-    return freshness === 'fresh' ? {label, compactLabel:label, queriedAt, waitSeconds:null} : null;
+    return freshness === 'fresh' ? {label:'운행 종료', waitSeconds:null} : null;
   }
-  if (arrival.arrivalStatus !== 'available' || arrival.etaSeconds == null || (freshness !== 'fresh' && !recentQuery)) return null;
+  if (arrival.arrivalStatus !== 'available' || arrival.etaSeconds == null) return null;
   const expected = parsed(arrival.expectedArrivalAt);
   const seconds = expected ? (expected.getTime() - now) / 1000 : arrival.etaSeconds;
+  if (!Number.isFinite(seconds)) return null;
+  const timestamp = parsed(arrival.dataQuality.sourceUpdatedAt) ?? parsed(arrival.dataQuality.fetchedAt);
+  const age = timestamp ? now - timestamp.getTime() : Infinity;
+  const recent = age >= 0 && age <= 90_000 && freshness !== 'stale';
+  const waitSeconds = Math.max(0, seconds);
+  const countdown = (displaySeconds = waitSeconds) => ({label:`${formatDuration(displaySeconds)}후`, waitSeconds});
+
+  if (source === 'cheonan-bis-upstream' || source === 'cheonan-bis-recent') {
+    return expected && recent && seconds > 0 ? countdown() : null;
+  }
+  if (source === 'cheonan-bis-timetable' || source === 'cheonan-bis-timetable-estimate') {
+    return expected && seconds >= 0 ? countdown() : null;
+  }
+  if (source === 'cheonan-bis-headway') {
+    return expected && seconds > 0 ? countdown() : null;
+  }
+  if (source === 'cheonan-bis-history') {
+    const last = parsed(arrival.expectedArrivalRangeEndAt);
+    if (!expected || !last || last.getTime() <= now || last < expected) return null;
+    const latestSeconds = (last.getTime() - now) / 1000;
+    return countdown((waitSeconds + latestSeconds) / 2);
+  }
+
+  const recentQuery = source === 'cheonan-bis-arrival' && recent;
+  if (freshness !== 'fresh' && !recentQuery) return null;
   if (seconds < 0 && arrival.etaSeconds !== 0) return null;
-  const prefix = freshness === 'fresh' ? '' : '최근 조회 ';
-  const duration = formatDuration(seconds);
-  return {
-    label: prefix + (seconds <= 0 ? '곧 도착 예정' : `약 ${duration} 후 도착 예정`),
-    compactLabel: prefix + (seconds <= 0 ? '곧 도착' : `${duration} 후`),
-    queriedAt,
-    waitSeconds: Math.max(0, seconds),
-  };
+  return countdown();
 }
 export function formatStation(station: StationRef): string {
   return station.arsId ? `${station.name} (${station.arsId}번)` : station.name;

@@ -143,6 +143,7 @@ export interface Arrival {
   arrivalStatus: 'available' | 'unavailable';
   etaSeconds: number | null;
   expectedArrivalAt: string | null;
+  expectedArrivalRangeEndAt?: string | null;
   operationStatus: 'running' | 'not_running' | 'unknown';
   dataQuality: Quality;
 }

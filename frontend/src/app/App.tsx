@@ -3,7 +3,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import { flushSync } from 'react-dom';
 import { api, ApiError, isAbortError } from '../shared/api/client';
 import type { Category, ConversationData, Destination, LiveData, OptionArrivals, RouteDetail, RouteOption, SearchArrivals, SelectionRequest, RouteSort, PlaceSort } from '../shared/api/types';
-import { currentArrival, effectiveFreshness, formatBusLabel, formatDuration, formatDistance, formatStation, formatTime } from '../shared/api/format';
+import { currentArrival, effectiveFreshness, formatBusLabel, formatDuration, formatDistance, formatStation, formatTime, NO_ARRIVAL } from '../shared/api/format';
 import { RouteCardHeader, RouteCards } from '../features/route-search/RouteCards';
 import { useVoiceGuide } from '../features/voice-guide/useVoiceGuide';
 import { routeSpeech, speechTexts } from '../features/voice-guide/speechText';
@@ -15,7 +15,7 @@ import { IDLE_COUNTDOWN_SECONDS, IDLE_WARNING_MS, LIVE_REFRESH_MS, ORIGIN_STATIO
 import { initialState, reducer } from './state';
 import type { State } from './state';
 import { CATEGORY_LABELS, prepareDestinations, displayText, displayDetail, displayGuidance } from '../shared/places';
-import { prototypeEnabled, simulatedArrivalLabel } from '../shared/prototypeTiming';
+import { prototypeEnabled } from '../shared/prototypeTiming';
 import type { PlaceCategory } from '../shared/places';
 import { usePressFeedback } from '../shared/ui/usePressFeedback';
 import s from './App.module.css';
@@ -36,16 +36,14 @@ function Heading({ title, subtitle }: { title: ReactNode; subtitle: ReactNode })
 function SelectedRoute({ live, cached, retry, verified, detail }: {
   live: LiveData | null; cached?: OptionArrivals; retry: () => void; verified: boolean; detail: RouteDetail;
 }) {
-  const {dataMode, liveChecked} = useContext(StateContext);
-  const simulate = prototypeEnabled(dataMode);
+  const {liveChecked} = useContext(StateContext);
   const buses = detail.segments.filter(segment => segment.type === 'bus');
   const matchingCache = cached?.routeSnapshotVersion === detail.routeSnapshotVersion ? cached : undefined;
   const arrivals = live?.arrivals ?? matchingCache?.arrivals ?? [];
   const first = buses[0];
   const arrival = first && verified ? currentArrival(arrivals.find(value =>
     value.segmentId === first.segmentId && value.routeId === first.routeId && value.boardStationId === first.boardStation.stationId)) : null;
-  const arrivalText = !first || !verified ? undefined : arrival?.label ?? (!liveChecked && !matchingCache ? '도착 정보 확인 중'
-    : simulate ? simulatedArrivalLabel(detail.routeOptionId, 0) : '도착 정보 확인 불가');
+  const arrivalText = !first || !verified ? undefined : arrival?.label ?? (!liveChecked && !matchingCache ? '도착 정보 확인 중' : NO_ARRIVAL);
   const changes = live?.serviceChanges.items.filter(change => effectiveFreshness(change.dataQuality) === 'fresh') ?? [];
   const duration = detail.estimatedTravelSeconds ?? null;
   return <section className={s.selectedRoute} aria-label="선택한 경로">

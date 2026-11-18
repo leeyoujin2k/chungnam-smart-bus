@@ -429,15 +429,17 @@ def test_card_arrivals_cover_every_bus_and_share_stop_queries(real_service, monk
     queried = []
 
     def official(request):
+        if request.url.path.endswith('/getRouteList.do'):
+            return httpx.Response(200, json={'resultList': []})
         stop = request.url.params['stopId']
         queried.append(stop)
         if stop != target_stop:
             return httpx.Response(503)
         return httpx.Response(200, json={'resultList':[{'ROUTE_ID':int(target_route), 'RTIME':4}]})
 
-    async def lookup(details, now):
+    async def lookup(details, now, *, timetables, history, provider):
         async with httpx.AsyncClient(transport=httpx.MockTransport(official)) as provider:
-            return await arrival_state_many(details, now, client=provider)
+            return await arrival_state_many(details, now, client=provider, timetables=timetables)
 
     monkeypatch.setattr('backend.api.routes.arrival_state_many', lookup)
     response = client.get(base + '/arrivals')

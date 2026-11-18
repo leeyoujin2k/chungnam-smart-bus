@@ -1,7 +1,7 @@
 import { Fragment, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import type { OptionArrivals, RouteOption, StationRef } from '../../shared/api/types';
-import { currentArrival, formatBusLabel, formatDistance, formatDuration } from '../../shared/api/format';
-import { routeTiming, simulatedArrivalLabel } from '../../shared/prototypeTiming';
+import { currentArrival, formatBusLabel, formatDistance, formatDuration, NO_ARRIVAL } from '../../shared/api/format';
+import { routeTiming } from '../../shared/prototypeTiming';
 import { displayText } from '../../shared/places';
 import s from '../../app/App.module.css';
 
@@ -54,7 +54,6 @@ function stationLabel(station: StationRef) {
 interface RouteCardData {
   option: RouteOption;
   arrival: string;
-  compactArrival: string;
   wait: number;
 }
 
@@ -139,13 +138,13 @@ function GroupedRouteCard({cards, board, alight, recommended, selected, busy, on
       <p className={s.groupSummary}><Icon file="92c82.svg" />{stationLabel(board)} - {stationLabel(alight)}</p>
     </>}
     <ul className={s.groupBusList} role="list" aria-label="이용할 버스 선택">
-      {visibleBuses.map(({option, arrival, compactArrival, wait}) => <li key={option.routeOptionId}>
+      {visibleBuses.map(({option, arrival, wait}) => <li key={option.routeOptionId}>
         <button type="button" className={s.groupBusRow} aria-label={`${busSequence(option)} · ${arrival}`}
           aria-pressed={selected === option.routeOptionId}
           disabled={busy || option.journeyStatus !== 'ready'} onClick={() => onChoose(option)}>
           <span className={s.groupBusNumbers}><BusNumbers names={option.routeNames} /></span>
           <span className={`${s.groupArrival} ${Number.isFinite(wait) ? s.groupArrivalKnown : ''}`}>
-            {compactArrival}<Icon file="d682b.svg" />
+            {arrival}<Icon file="d682b.svg" />
           </span>
         </button>
       </li>)}
@@ -180,10 +179,8 @@ export function RouteCards({options, recommended = false, selected, busy, simula
       && snapshot.arrivals.length === option.routeNames.length
       && (!option.boardStation || boarding?.boardStationId === option.boardStation.stationId)
       ? currentArrival(boarding, now) : null;
-    const arrival = firstArrival?.label ?? (simulate && arrivals ? simulatedArrivalLabel(option.routeOptionId, 0)
-      : checkingArrivals ? '도착 정보 확인 중' : '도착 정보 확인 불가');
-    const compactArrival = firstArrival?.compactLabel ?? (arrival === '도착 정보 확인 불가' ? '도착 정보 없음' : arrival);
-    return {option, arrival, compactArrival, wait: firstArrival?.waitSeconds ?? Infinity};
+    const arrival = firstArrival?.label ?? (checkingArrivals ? '도착 정보 확인 중' : NO_ARRIVAL);
+    return {option, arrival, wait: firstArrival?.waitSeconds ?? Infinity};
   });
   if (sortByWait) cards.sort(compareWait);
   const groups = new Map<string, RouteCardData[]>();

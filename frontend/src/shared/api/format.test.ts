@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { arrivalLabel, effectiveFreshness, formatDateTime, formatDistance, formatDuration, formatTime } from './format';
+import { currentArrival, effectiveFreshness, formatDateTime, formatDistance, formatDuration, formatTime } from './format';
 import type { Arrival, Quality } from './types';
 
 const now = Date.parse('2026-11-10T00:00:00Z');
@@ -34,9 +34,41 @@ describe('displaying verified transport facts', () => {
   });
 
   it('does not present unknown or old ETA as a current arrival prediction', () => {
-    expect(arrivalLabel(arrival, now)).toBe('5분 후 도착 예정');
-    expect(arrivalLabel(arrival, now + 31_000)).toBe('오래된 도착 정보');
-    expect(arrivalLabel({ ...arrival, dataQuality: { ...quality, freshness: 'unknown' } }, now)).toBe('도착 정보 갱신 시각 확인 불가');
-    expect(arrivalLabel({ ...arrival, etaSeconds: null }, now)).toBe('도착 정보 확인 불가');
+    expect(currentArrival(arrival, now)?.label).toBe('5분후');
+    expect(currentArrival(arrival, now + 31_000)).toBeNull();
+    expect(currentArrival({ ...arrival, dataQuality: { ...quality, freshness: 'unknown' } }, now)).toBeNull();
+    expect(currentArrival({ ...arrival, etaSeconds: null }, now)).toBeNull();
+    expect(currentArrival({ ...arrival, expectedArrivalAt: quality.fetchedAt, etaSeconds: 0 }, now)?.label).toBe('0분후');
+  });
+
+  it.each(['cheonan-bis-timetable', 'cheonan-bis-timetable-estimate'])(
+    'counts down from the scheduled arrival time for %s', sourceId => {
+    const scheduled: Arrival = {
+      ...arrival, dataQuality: { ...quality, sourceId, sourceUpdatedAt: null, freshness: 'unknown' },
+    };
+    expect(currentArrival(scheduled, now + 135_000)).toEqual({label: '3분후', waitSeconds: 165});
+    expect(currentArrival(scheduled, now + 300_001)).toBeNull();
+    expect(currentArrival({ ...scheduled, expectedArrivalAt: null }, now)).toBeNull();
+  });
+
+  it('formats upstream, recent, headway and historical estimates as minute countdowns', () => {
+    const sample = (sourceId: string): Arrival => ({
+      ...arrival, etaSeconds:420, expectedArrivalAt:'2026-11-10T00:06:00Z',
+      dataQuality:{sourceId, sourceUpdatedAt:null, fetchedAt:'2026-11-09T23:59:00Z', freshness:'unknown'},
+    });
+    expect(currentArrival(sample('cheonan-bis-upstream'), now)?.label).toBe('6분후');
+    const recent = sample('cheonan-bis-recent');
+    expect(currentArrival(recent, now)?.label).toBe('6분후');
+    expect(currentArrival(recent, now + 30_000)?.label).toBe('6분후');
+    expect(currentArrival(recent, now + 30_001)).toBeNull();
+    const headway = sample('cheonan-bis-headway');
+    expect(currentArrival(headway, now)?.label).toBe('6분후');
+    expect(currentArrival(headway, now + 360_000)).toBeNull();
+    const history = {...sample('cheonan-bis-history'), expectedArrivalAt:'2026-11-10T00:10:00Z',
+      expectedArrivalRangeEndAt:'2026-11-10T00:15:00Z'};
+    expect(currentArrival(history, now)?.label).toBe('13분후');
+    expect(currentArrival(history, now + 720_000)?.label).toBe('2분후');
+    expect(currentArrival(history, now + 900_000)).toBeNull();
+    expect(currentArrival({...arrival, operationStatus:'not_running'}, now)?.label).toBe('운행 종료');
   });
 });

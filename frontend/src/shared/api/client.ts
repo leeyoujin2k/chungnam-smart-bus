@@ -60,7 +60,8 @@ async function attempt<T>(path: string, method: 'GET' | 'POST', body: unknown, s
   const onAbort = () => controller.abort();
   signal?.addEventListener('abort', onAbort, { once: true });
   const recording = body instanceof Blob ? body : null;
-  const timeout = recording ? 45_000 : path === '/route-searches' ? 30_000 : TIMEOUT_MS;
+  const checkingArrivals = path.endsWith('/arrivals') || path.endsWith('/live');
+  const timeout = recording ? 45_000 : path === '/route-searches' ? 30_000 : checkingArrivals ? 16_000 : TIMEOUT_MS;
   const timer = setTimeout(() => { timedOut = true; controller.abort(); }, timeout);
   try {
     const response = await fetch(BASE + path, {

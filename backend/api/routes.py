@@ -71,7 +71,8 @@ async def live(routeSearchId: s.Identifier, routeOptionId: s.Identifier, request
     now, provider = state(request)
     result = journeys.checked_detail(db, routeSearchId, routeOptionId, provider, now, request.app.state.settings.data_mode, transport=request.app.state.transport)
     if result.dataSource == 'cheonan-bis-static':
-        provider = await arrival_state(result, now)
+        provider = await arrival_state(result, now, timetables=request.app.state.timetables,
+                                       history=request.app.state.arrival_history, provider=provider)
     return response(request, journeys.live_info(result, provider, now, session=db))
 
 
@@ -86,7 +87,8 @@ async def search_arrivals(routeSearchId: s.Identifier, request: Request, db: Ses
         changed()
     destination = catalog.destination(db, search.destination_id)
     details = await run_in_threadpool(transport.checked_details, search, destination)
-    arrivals = await arrival_state_many(details, now)
+    arrivals = await arrival_state_many(details, now, timetables=request.app.state.timetables,
+                                        history=request.app.state.arrival_history, provider=provider)
     return response(request, s.SearchArrivals(routeSearchId=routeSearchId, options={
         detail.routeOptionId: s.OptionArrivals(routeSnapshotVersion=detail.routeSnapshotVersion,
             arrivals=journeys.arrival_values(detail, arrivals, now)) for detail in details
